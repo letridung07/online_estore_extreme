@@ -97,6 +97,56 @@
             </div>
         </div>
         
+        <div class="reviews">
+            <h2>Customer Reviews</h2>
+            {% if average_rating %}
+                <p><strong>Average Rating:</strong> {{ average_rating|floatformat:1 }} / 5</p>
+            {% else %}
+                <p>No reviews yet. Be the first to review this product!</p>
+            {% endif %}
+            
+            {% if reviews %}
+                <div class="review-list">
+                    {% for review in reviews %}
+                        <div class="review" style="border-bottom: 1px solid #ddd; padding: 10px 0; margin-bottom: 10px;">
+                            <p><strong>Rating:</strong> {{ review.rating }} / 5</p>
+                            <p><strong>By:</strong> {{ review.user.username }} on {{ review.created_at|date:"F d, Y" }}</p>
+                            {% if review.comment %}
+                                <p><strong>Comment:</strong> {{ review.comment }}</p>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+            
+            {% if user.is_authenticated %}
+                <div class="review-form">
+                    <h3>Submit a Review</h3>
+                    <form method="POST" action="">
+                        {% csrf_token %}
+                        <div style="margin-bottom: 10px;">
+                            <label for="rating">Rating:</label>
+                            <select name="rating" id="rating" required style="padding: 5px;">
+                                <option value="">Select Rating</option>
+                                <option value="5">5 - Excellent</option>
+                                <option value="4">4 - Good</option>
+                                <option value="3">3 - Average</option>
+                                <option value="2">2 - Poor</option>
+                                <option value="1">1 - Terrible</option>
+                            </select>
+                        </div>
+                        <div style="margin-bottom: 10px;">
+                            <label for="comment">Comment (optional):</label><br>
+                            <textarea name="comment" id="comment" rows="4" style="width: 100%; padding: 5px;"></textarea>
+                        </div>
+                        <button type="submit" class="btn">Submit Review</button>
+                    </form>
+                </div>
+            {% else %}
+                <p>Please <a href="{% url 'login' %}">log in</a> to submit a review.</p>
+            {% endif %}
+        </div>
+        
         <div class="recommendations">
             <h2>Recommended Products</h2>
             {% if recommendations %}

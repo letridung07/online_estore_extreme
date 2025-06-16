@@ -28,3 +28,19 @@ class Product(models.Model):
     @property
     def is_in_stock(self):
         return self.stock > 0
+
+
+class Review(models.Model):
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='reviews')
+    user = models.ForeignKey('auth.User', on_delete=models.CASCADE, related_name='product_reviews')
+    rating = models.PositiveSmallIntegerField(choices=[(i, str(i)) for i in range(1, 6)])
+    comment = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('product', 'user')
+        verbose_name_plural = "Reviews"
+
+    def __str__(self):
+        return f"{self.rating} star review for {self.product.name} by {self.user.username}"

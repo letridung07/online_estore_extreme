@@ -1,7 +1,10 @@
 from django.shortcuts import render, get_object_or_404
-from django.db.models import Q, Count
-from .models import Product, Category
+from django.db.models import Q, Count, Avg
+from .models import Product, Category, Review
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.shortcuts import redirect
+
+REVIEW_DISPLAY_LIMIT = 10  # Number of reviews to display per product
 
 def product_list(request):
     """
@@ -70,7 +73,7 @@ def product_list(request):
 
 def product_detail(request, pk):
     """
-    View for displaying a single product's details with recommendations.
+    View for displaying a single product's details with recommendations and reviews.
     """
     product = get_object_or_404(Product, pk=pk)
     
@@ -81,8 +84,33 @@ def product_detail(request, pk):
         # Fallback to most popular products based on order frequency
         recommendations = Product.objects.annotate(order_count=Count('orderitem')).order_by('-order_count')[:3]
     
+    # Fetch reviews for this product (limit to latest N for performance)
+    reviews = product.reviews.order_by('-created_at')[:REVIEW_DISPLAY_LIMIT]
+    average_rating = product.reviews.aggregate(Avg('rating'))['rating__avg']
+    
+    # Handle review submission
+    if request.method == 'POST' and request.user.is_authenticated:
+        rating = request.POST.get('rating')
+        comment = request.POST.get('comment', '')
+        try:
+            rating_int = int(rating)
+        except (TypeError, ValueError):
+            rating_int = None
+        if rating_int and 1 <= rating_int <= 5:
+            # Check if user has already reviewed this product
+            if not Review.objects.filter(product=product, user=request.user).exists():
+                Review.objects.create(
+                    product=product,
+                    user=request.user,
+                    rating=rating_int,
+                    comment=comment
+                )
+                return redirect('product_detail', pk=product.pk)
+    
     context = {
         'product': product,
         'recommendations': recommendations,
+        'reviews': reviews,
+        'average_rating': average_rating,
     }
     return render(request, 'products/product_detail.html', context)
