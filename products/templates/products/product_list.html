@@ -1,5 +1,4 @@
 {% load static %}
-{% load query_transform %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -82,7 +81,7 @@
                 <ul class="pagination justify-content-center">
                     {% if products.has_previous %}
                         <li class="page-item">
-<a class="page-link" href="?{% query_transform page=products.previous_page_number %}">&laquo; Previous</a>
+<a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ products.previous_page_number }}">&laquo; Previous</a>
                         </li>
                     {% else %}
                         <li class="page-item disabled">
@@ -92,13 +91,13 @@
                     
                     {% for num in products.paginator.page_range %}
                         <li class="page-item {% if products.number == num %}active{% endif %}">
-<a class="page-link" href="?{% query_transform page=num %}">{{ num }}</a>
+<a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ num }}">{{ num }}</a>
                         </li>
                     {% endfor %}
                     
                     {% if products.has_next %}
                         <li class="page-item">
-<a class="page-link" href="?{% query_transform page=products.next_page_number %}">Next &raquo;</a>
+<a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ products.next_page_number }}">Next &raquo;</a>
                         </li>
                     {% else %}
                         <li class="page-item disabled">
