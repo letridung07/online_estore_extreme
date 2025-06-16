@@ -44,3 +44,15 @@ class Review(models.Model):
 
     def __str__(self):
         return f"{self.rating} star review for {self.product.name} by {self.user.username}"
+
+
+class ProductView(models.Model):
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='views')
+    user = models.ForeignKey('auth.User', on_delete=models.CASCADE, related_name='product_views', null=True, blank=True)
+    viewed_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name_plural = "Product Views"
+
+    def __str__(self):
+        return f"View of {self.product.name} by {self.user.username if self.user else 'Anonymous'} on {self.viewed_at.strftime('%Y-%m-%d')}"

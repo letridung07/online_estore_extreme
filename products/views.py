@@ -77,11 +77,33 @@ def product_detail(request, pk):
     """
     product = get_object_or_404(Product, pk=pk)
     
-    # Basic recommendation system: suggest products from the same category
-    recommendations = Product.objects.filter(category=product.category).exclude(pk=product.pk)[:3]
+    # Record product view
+    if request.user.is_authenticated:
+        ProductView.objects.create(product=product, user=request.user)
+    else:
+        ProductView.objects.create(product=product)
     
+    # Enhanced recommendation system
+    recommendations = []
+    
+    # 1. Personalized recommendations based on browsing history (for authenticated users)
+    if request.user.is_authenticated:
+        # Get categories the user has viewed frequently
+        viewed_categories = Category.objects.filter(
+            products__views__user=request.user
+        ).annotate(view_count=Count('products__views')).order_by('-view_count')[:2]
+        
+        if viewed_categories:
+            recommendations = Product.objects.filter(
+                category__in=viewed_categories
+            ).exclude(pk=product.pk)[:3]
+    
+    # 2. If no personalized recommendations or user is not authenticated, use category-based
     if not recommendations:
-        # Fallback to most popular products based on order frequency
+        recommendations = Product.objects.filter(category=product.category).exclude(pk=product.pk)[:3]
+    
+    # 3. Fallback to most popular products based on order frequency
+    if not recommendations:
         recommendations = Product.objects.annotate(order_count=Count('orderitem')).order_by('-order_count')[:3]
     
     # Fetch reviews for this product (limit to latest N for performance)
