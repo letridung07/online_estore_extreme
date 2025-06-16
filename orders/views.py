@@ -8,7 +8,7 @@ from cart.views import get_cart
 @login_required
 def checkout(request):
     cart = get_cart(request)
-    if not cart.items.all():
+    if not cart.items.exists():
         messages.error(request, "Your cart is empty. Add items to your cart before checking out.")
         return redirect('cart_detail')
     
@@ -19,12 +19,14 @@ def checkout(request):
         postal_code = request.POST.get('postal_code')
         country = request.POST.get('country')
         
-        shipping_address = f"{full_name}\n{address}\n{city}, {postal_code}\n{country}"
-        
         order = Order.objects.create(
             user=request.user,
             total_price=cart.total_price,
-            shipping_address=shipping_address,
+            full_name=full_name,
+            address=address,
+            city=city,
+            postal_code=postal_code,
+            country=country,
             status='pending'
         )
         

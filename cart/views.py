@@ -35,13 +35,16 @@ def add_to_cart(request, product_id):
 def update_cart_item(request, item_id):
     cart_item = get_object_or_404(CartItem, id=item_id, cart=get_cart(request))
     if request.method == 'POST':
-        quantity = int(request.POST.get('quantity', 1))
-        if quantity > 0 and quantity <= cart_item.product.stock:
-            cart_item.quantity = quantity
-            cart_item.save()
-            messages.success(request, f"Updated quantity of {cart_item.product.name}.")
-        else:
-            messages.error(request, f"Invalid quantity. Must be between 1 and {cart_item.product.stock}.")
+        try:
+            quantity = int(request.POST.get('quantity', 1))
+            if quantity > 0 and quantity <= cart_item.product.stock:
+                cart_item.quantity = quantity
+                cart_item.save()
+                messages.success(request, f"Updated quantity of {cart_item.product.name}.")
+            else:
+                messages.error(request, f"Invalid quantity. Must be between 1 and {cart_item.product.stock}.")
+        except (ValueError, TypeError):
+            messages.error(request, "Invalid quantity. Please enter a valid number.")
     return redirect('cart_detail')
 
 def remove_cart_item(request, item_id):
