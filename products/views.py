@@ -2,6 +2,7 @@ from django.shortcuts import render, get_object_or_404
 from django.db.models import Q, Count, Avg
 from .models import Product, Category, Review
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.shortcuts import redirect
 
 def product_list(request):
     """
@@ -91,14 +92,13 @@ def product_detail(request, pk):
         comment = request.POST.get('comment', '')
         if rating and 1 <= int(rating) <= 5:
             # Check if user has already reviewed this product
-            if not reviews.filter(user=request.user).exists():
+            if not Review.objects.filter(product=product, user=request.user).exists():
                 Review.objects.create(
                     product=product,
                     user=request.user,
                     rating=int(rating),
                     comment=comment
                 )
-                from django.shortcuts import redirect
                 return redirect('product_detail', pk=product.pk)
     
     context = {
