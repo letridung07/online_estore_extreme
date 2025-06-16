@@ -47,8 +47,8 @@ def product_list(request):
     elif sort == 'popular':
         products = products.annotate(order_count=Count('orderitem')).order_by('-order_count')
     else:
-        # Default ordering is now handled by Product model's Meta class
-        pass
+        # Default ordering: by name ascending (or adjust as needed)
+        products = products.order_by('name')
     
     # Handle pagination
     paginator = Paginator(products, 12)  # Show 12 products per page
