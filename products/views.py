@@ -81,9 +81,9 @@ def product_detail(request, pk):
         # Fallback to most popular products based on order frequency
         recommendations = Product.objects.annotate(order_count=Count('orderitem')).order_by('-order_count')[:3]
     
-    # Fetch reviews for this product
-    reviews = product.reviews.all()
-    average_rating = reviews.aggregate(Avg('rating'))['rating__avg']
+    # Fetch reviews for this product (limit to latest 10 for performance)
+    reviews = product.reviews.order_by('-created_at')[:10]
+    average_rating = product.reviews.aggregate(Avg('rating'))['rating__avg']
     
     # Handle review submission
     if request.method == 'POST' and request.user.is_authenticated:
@@ -98,6 +98,8 @@ def product_detail(request, pk):
                     rating=int(rating),
                     comment=comment
                 )
+                from django.shortcuts import redirect
+                return redirect('product_detail', pk=product.pk)
     
     context = {
         'product': product,
