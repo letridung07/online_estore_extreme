@@ -83,7 +83,7 @@ def product_detail(request, pk):
     
     # Fetch reviews for this product
     reviews = product.reviews.all()
-    average_rating = reviews.aggregate(Avg('rating'))['rating__avg'] if reviews else None
+    average_rating = reviews.aggregate(Avg('rating'))['rating__avg']
     
     # Handle review submission
     if request.method == 'POST' and request.user.is_authenticated:
