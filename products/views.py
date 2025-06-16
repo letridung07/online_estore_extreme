@@ -46,6 +46,9 @@ def product_list(request):
         products = products.order_by('-price')
     elif sort == 'popular':
         products = products.annotate(order_count=Count('orderitem')).order_by('-order_count')
+    else:
+        # Default ordering to avoid pagination issues with unordered querysets
+        products = products.order_by('id')
     
     # Handle pagination
     paginator = Paginator(products, 12)  # Show 12 products per page
