@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Order Confirmation - Online eStore{% endblock %}
+
+{% block content %}
+    <div class="container mt-4">
+        <h1 class="mb-4">Order Confirmation</h1>
+        <div class="alert alert-success" role="alert">
+            Thank you for your order! Your order has been placed successfully.
+        </div>
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Order #{{ order.id }}</h5>
+                <p class="card-text">Status: {{ order.get_status_display }}</p>
+                <p class="card-text">Total: ${{ order.total_price }}</p>
+                <p class="card-text">Placed on: {{ order.created_at }}</p>
+                <h6>Shipping Address:</h6>
+                <p class="card-text">{{ order.shipping_address|linebreaks }}</p>
+                <h6>Items:</h6>
+                <ul class="list-group list-group-flush">
+                    {% for item in order.items.all %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            {{ item.product.name }} (x{{ item.quantity }})
+                            <span>${{ item.total_price }}</span>
+                        </li>
+                    {% endfor %}
+                </ul>
+                <a href="{% url 'product_list' %}" class="btn btn-primary mt-3">Continue Shopping</a>
+            </div>
+        </div>
+    </div>
+{% endblock %}
