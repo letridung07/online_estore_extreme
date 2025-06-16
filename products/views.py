@@ -1,10 +1,11 @@
 from django.shortcuts import render, get_object_or_404
 from django.db.models import Q, Count
 from .models import Product, Category
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
 def product_list(request):
     """
-    View for displaying a list of products with search and filtering capabilities.
+    View for displaying a list of products with search, filtering, sorting, and pagination capabilities.
     """
     products = Product.objects.all()
     categories = Category.objects.all()
@@ -34,6 +35,27 @@ def product_list(request):
     if in_stock == 'true':
         products = products.filter(stock__gt=0)
     
+    # Handle sorting
+    sort = request.GET.get('sort', '')
+    if sort == 'price_asc':
+        products = products.order_by('price')
+    elif sort == 'price_desc':
+        products = products.order_by('-price')
+    elif sort == 'popular':
+        products = products.annotate(order_count=Count('orderitem')).order_by('-order_count')
+    
+    # Handle pagination
+    paginator = Paginator(products, 12)  # Show 12 products per page
+    page = request.GET.get('page')
+    try:
+        products = paginator.page(page)
+    except PageNotAnInteger:
+        # If page is not an integer, deliver first page
+        products = paginator.page(1)
+    except EmptyPage:
+        # If page is out of range, deliver last page of results
+        products = paginator.page(paginator.num_pages)
+    
     context = {
         'products': products,
         'categories': categories,
@@ -42,6 +64,7 @@ def product_list(request):
         'min_price': min_price,
         'max_price': max_price,
         'in_stock': in_stock,
+        'sort': sort,
     }
     return render(request, 'products/product_list.html', context)
 
