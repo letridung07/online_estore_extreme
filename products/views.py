@@ -1,6 +1,6 @@
 from django.shortcuts import render, get_object_or_404
-from django.db.models import Q, Count
-from .models import Product, Category
+from django.db.models import Q, Count, Avg
+from .models import Product, Category, Review
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
 def product_list(request):
@@ -70,7 +70,7 @@ def product_list(request):
 
 def product_detail(request, pk):
     """
-    View for displaying a single product's details with recommendations.
+    View for displaying a single product's details with recommendations and reviews.
     """
     product = get_object_or_404(Product, pk=pk)
     
@@ -81,8 +81,28 @@ def product_detail(request, pk):
         # Fallback to most popular products based on order frequency
         recommendations = Product.objects.annotate(order_count=Count('orderitem')).order_by('-order_count')[:3]
     
+    # Fetch reviews for this product
+    reviews = product.reviews.all()
+    average_rating = reviews.aggregate(Avg('rating'))['rating__avg'] if reviews else None
+    
+    # Handle review submission
+    if request.method == 'POST' and request.user.is_authenticated:
+        rating = request.POST.get('rating')
+        comment = request.POST.get('comment', '')
+        if rating and 1 <= int(rating) <= 5:
+            # Check if user has already reviewed this product
+            if not reviews.filter(user=request.user).exists():
+                Review.objects.create(
+                    product=product,
+                    user=request.user,
+                    rating=int(rating),
+                    comment=comment
+                )
+    
     context = {
         'product': product,
         'recommendations': recommendations,
+        'reviews': reviews,
+        'average_rating': average_rating,
     }
     return render(request, 'products/product_detail.html', context)
