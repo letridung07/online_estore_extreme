@@ -4,6 +4,8 @@ from .models import Product, Category, Review
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.shortcuts import redirect
 
+REVIEW_DISPLAY_LIMIT = 10  # Number of reviews to display per product
+
 def product_list(request):
     """
     View for displaying a list of products with search, filtering, sorting, and pagination capabilities.
@@ -82,21 +84,25 @@ def product_detail(request, pk):
         # Fallback to most popular products based on order frequency
         recommendations = Product.objects.annotate(order_count=Count('orderitem')).order_by('-order_count')[:3]
     
-    # Fetch reviews for this product (limit to latest 10 for performance)
-    reviews = product.reviews.order_by('-created_at')[:10]
+    # Fetch reviews for this product (limit to latest N for performance)
+    reviews = product.reviews.order_by('-created_at')[:REVIEW_DISPLAY_LIMIT]
     average_rating = product.reviews.aggregate(Avg('rating'))['rating__avg']
     
     # Handle review submission
     if request.method == 'POST' and request.user.is_authenticated:
         rating = request.POST.get('rating')
         comment = request.POST.get('comment', '')
-        if rating and 1 <= int(rating) <= 5:
+        try:
+            rating_int = int(rating)
+        except (TypeError, ValueError):
+            rating_int = None
+        if rating_int and 1 <= rating_int <= 5:
             # Check if user has already reviewed this product
             if not Review.objects.filter(product=product, user=request.user).exists():
                 Review.objects.create(
                     product=product,
                     user=request.user,
-                    rating=int(rating),
+                    rating=rating_int,
                     comment=comment
                 )
                 return redirect('product_detail', pk=product.pk)
