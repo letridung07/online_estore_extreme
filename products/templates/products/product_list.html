@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product List - Online eStore</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .search-filter {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .search-filter input, .search-filter select {
+            padding: 8px;
+            font-size: 16px;
+        }
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        .product-card {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: center;
+        }
+        .product-card img {
+            max-width: 100%;
+            height: auto;
+        }
+        .product-card h3 {
+            margin: 10px 0;
+        }
+        .product-card p {
+            color: #666;
+        }
+        .product-card a {
+            text-decoration: none;
+            color: #007bff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Online eStore - Products</h1>
+        
+        <form method="GET" class="search-filter">
+            <input type="text" name="search" placeholder="Search products..." value="{{ search_query }}">
+            <select name="category">
+                <option value="">All Categories</option>
+                {% for category in categories %}
+                    <option value="{{ category.id }}" {% if selected_category == category.id|stringformat:"s" %}selected{% endif %}>
+                        {{ category.name }}
+                    </option>
+                {% endfor %}
+            </select>
+            <input type="number" name="min_price" placeholder="Min Price" value="{{ min_price }}" step="0.01" min="0">
+            <input type="number" name="max_price" placeholder="Max Price" value="{{ max_price }}" step="0.01" min="0">
+            <label>
+                <input type="checkbox" name="in_stock" value="true" {% if in_stock == 'true' %}checked{% endif %}>
+                In Stock Only
+            </label>
+            <button type="submit">Filter</button>
+        </form>
+        
+        <div class="product-grid">
+            {% for product in products %}
+                <div class="product-card">
+                    {% if product.image %}
+                        <img src="{{ product.image.url }}" alt="{{ product.name }}">
+                    {% else %}
+                        <img src="https://via.placeholder.com/150" alt="No image available">
+                    {% endif %}
+                    <h3>{{ product.name }}</h3>
+                    <p>Price: ${{ product.price }}</p>
+                    <p>Stock: {% if product.is_in_stock %}In Stock{% else %}Out of Stock{% endif %}</p>
+                    <a href="{% url 'product_detail' pk=product.pk %}">View Details</a>
+                </div>
+            {% empty %}
+                <p>No products found matching your criteria.</p>
+            {% endfor %}
+        </div>
+    </div>
+</body>
+</html>
