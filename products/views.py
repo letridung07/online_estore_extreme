@@ -1,6 +1,7 @@
 from django.shortcuts import render, get_object_or_404
 from django.db.models import Q, Count
 from .models import Product, Category
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
 def product_list(request):
     """
@@ -44,7 +45,6 @@ def product_list(request):
         products = products.annotate(order_count=Count('orderitem')).order_by('-order_count')
     
     # Handle pagination
-    from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
     paginator = Paginator(products, 12)  # Show 12 products per page
     page = request.GET.get('page')
     try:
