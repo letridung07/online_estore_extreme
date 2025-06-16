@@ -1,6 +1,6 @@
 from django.shortcuts import render, get_object_or_404
 from django.db.models import Q, Count, Avg
-from .models import Product, Category, Review
+from .models import Product, Category, Review, ProductView
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.shortcuts import redirect
 
@@ -71,23 +71,57 @@ def product_list(request):
     }
     return render(request, 'products/product_list.html', context)
 
+def record_product_view(product, user):
+    """
+    Helper function to record a product view.
+    """
+    if user.is_authenticated:
+        ProductView.objects.create(product=product, user=user)
+    else:
+        ProductView.objects.create(product=product)
+
+def get_personalized_recommendations(product, user):
+    """
+    Helper function to generate personalized product recommendations.
+    """
+    recommendations = []
+    # 1. Personalized recommendations based on browsing history (for authenticated users)
+    if user.is_authenticated:
+        viewed_categories = Category.objects.filter(
+            products__views__user=user
+        ).annotate(view_count=Count('products__views')).order_by('-view_count')[:2]
+
+        if viewed_categories:
+            recommendations = Product.objects.filter(
+                category__in=viewed_categories
+            ).exclude(pk=product.pk)[:3]
+
+    # 2. If no personalized recommendations or user is not authenticated, use category-based
+    if not recommendations:
+        recommendations = Product.objects.filter(category=product.category).exclude(pk=product.pk)[:3]
+
+    # 3. Fallback to most popular products based on order frequency
+    if not recommendations:
+        recommendations = Product.objects.annotate(order_count=Count('orderitem')).order_by('-order_count')[:3]
+
+    return recommendations
+
 def product_detail(request, pk):
     """
     View for displaying a single product's details with recommendations and reviews.
     """
     product = get_object_or_404(Product, pk=pk)
-    
-    # Basic recommendation system: suggest products from the same category
-    recommendations = Product.objects.filter(category=product.category).exclude(pk=product.pk)[:3]
-    
-    if not recommendations:
-        # Fallback to most popular products based on order frequency
-        recommendations = Product.objects.annotate(order_count=Count('orderitem')).order_by('-order_count')[:3]
-    
+
+    # Record product view using helper
+    record_product_view(product, request.user)
+
+    # Get recommendations using helper
+    recommendations = get_personalized_recommendations(product, request.user)
+
     # Fetch reviews for this product (limit to latest N for performance)
     reviews = product.reviews.order_by('-created_at')[:REVIEW_DISPLAY_LIMIT]
     average_rating = product.reviews.aggregate(Avg('rating'))['rating__avg']
-    
+
     # Handle review submission
     if request.method == 'POST' and request.user.is_authenticated:
         rating = request.POST.get('rating')
@@ -106,7 +140,7 @@ def product_detail(request, pk):
                     comment=comment
                 )
                 return redirect('product_detail', pk=product.pk)
-    
+
     context = {
         'product': product,
         'recommendations': recommendations,
