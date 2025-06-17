@@ -45,3 +45,11 @@ def current_promotions(request):
         'sales': sales,
     }
     return render(request, 'promotions/current_promotions.html', context)
+
+def remove_discount_code(request):
+    if 'discount_code' in request.session:
+        code = request.session['discount_code']
+        del request.session['discount_code']
+        request.session.modified = True
+        messages.success(request, f"Discount code {code} has been removed.")
+    return redirect('cart_detail')

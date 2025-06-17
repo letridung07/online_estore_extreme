@@ -66,7 +66,9 @@
                             <p class="card-text">Shipping: TBD</p>
                             <p class="card-text">Tax: TBD</p>
                             {% if request.session.discount_code %}
-                                <p class="card-text text-success">Discount Applied: {{ request.session.discount_code }}</p>
+                                <p class="card-text text-success">Discount Applied: {{ request.session.discount_code }}
+                                    <a href="{% url 'promotions:remove_discount' %}" class="btn btn-sm btn-outline-danger ml-2">Remove</a>
+                                </p>
                                 {% if discount_amount > 0 %}
                                     <p class="card-text text-success">Discount: -${{ discount_amount|floatformat:2 }}</p>
                                 {% endif %}
