@@ -99,3 +99,25 @@ def edit_profile(request):
         'profile_form': profile_form,
     }
     return render(request, 'accounts/edit_profile.html', context)
+
+@login_required
+def email_preferences(request):
+    user = request.user
+    try:
+        profile = user.profile
+    except UserProfile.DoesNotExist:
+        profile = UserProfile.objects.create(user=user)
+    
+    if request.method == 'POST':
+        newsletter = request.POST.get('newsletter') == 'on'
+        promotional = request.POST.get('promotional_emails') == 'on'
+        profile.newsletter_subscription = newsletter
+        profile.promotional_emails = promotional
+        profile.save()
+        return redirect('profile')
+    else:
+        context = {
+            'user': user,
+            'profile': profile,
+        }
+        return render(request, 'accounts/email_preferences.html', context)
