@@ -92,6 +92,7 @@ def product_detail(request, pk):
     """
     View for displaying a single product's details with recommendations and reviews.
     """
+    from accounts.models import Wishlist, WishlistItem
     product = get_object_or_404(Product, pk=pk)
 
     # Record product view using helper
@@ -103,6 +104,15 @@ def product_detail(request, pk):
     # Fetch reviews for this product (limit to latest N for performance)
     reviews = product.reviews.order_by('-created_at')[:REVIEW_DISPLAY_LIMIT]
     average_rating = product.reviews.aggregate(Avg('rating'))['rating__avg']
+
+    # Check if product is in user's wishlist
+    product_in_wishlist = False
+    if request.user.is_authenticated:
+        try:
+            wishlist = request.user.wishlist.get()
+            product_in_wishlist = WishlistItem.objects.filter(wishlist=wishlist, product=product).exists()
+        except Wishlist.DoesNotExist:
+            pass
 
     # Handle review submission
     if request.method == 'POST' and request.user.is_authenticated:
@@ -128,5 +138,6 @@ def product_detail(request, pk):
         'recommendations': recommendations,
         'reviews': reviews,
         'average_rating': average_rating,
+        'product_in_wishlist': product_in_wishlist,
     }
     return render(request, 'products/product_detail.html', context)
