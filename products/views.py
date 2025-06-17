@@ -3,6 +3,7 @@ from django.db.models import Q, Count, Avg
 from .models import Product, Category, Review, ProductView
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.shortcuts import redirect
+from products.recommendations import get_personalized_recommendations, get_popular_products # type: ignore
 
 REVIEW_DISPLAY_LIMIT = 10  # Number of reviews to display per product
 
@@ -62,6 +63,9 @@ def product_list(request):
         # If page is out of range, deliver last page of results
         products = paginator.page(paginator.num_pages)
     
+    # Get popular products for display on the list page
+    popular_products = get_popular_products(limit=5)
+    
     context = {
         'products': products,
         'categories': categories,
@@ -71,6 +75,7 @@ def product_list(request):
         'max_price': max_price,
         'in_stock': in_stock,
         'sort': sort,
+        'popular_products': popular_products,
     }
     return render(request, 'products/product_list.html', context)
 
@@ -83,32 +88,6 @@ def record_product_view(product, user):
     else:
         ProductView.objects.create(product=product)
 
-def get_personalized_recommendations(product, user):
-    """
-    Helper function to generate personalized product recommendations.
-    """
-    recommendations = []
-    # 1. Personalized recommendations based on browsing history (for authenticated users)
-    if user.is_authenticated:
-        viewed_categories = Category.objects.filter(
-            products__views__user=user
-        ).annotate(view_count=Count('products__views')).order_by('-view_count')[:2]
-
-        if viewed_categories:
-            recommendations = Product.objects.filter(
-                category__in=viewed_categories
-            ).exclude(pk=product.pk)[:3]
-
-    # 2. If no personalized recommendations or user is not authenticated, use category-based
-    if not recommendations:
-        recommendations = Product.objects.filter(category=product.category).exclude(pk=product.pk)[:3]
-
-    # 3. Fallback to most popular products based on order frequency
-    if not recommendations:
-        recommendations = Product.objects.annotate(order_count=Count('orderitem')).order_by('-order_count')[:3]
-
-    return recommendations
-
 def product_detail(request, pk):
     """
     View for displaying a single product's details with recommendations and reviews.
@@ -118,8 +97,8 @@ def product_detail(request, pk):
     # Record product view using helper
     record_product_view(product, request.user)
 
-    # Get recommendations using helper
-    recommendations = get_personalized_recommendations(product, request.user)
+    # Get personalized recommendations for the user
+    recommendations = get_personalized_recommendations(request.user, limit=5)
 
     # Fetch reviews for this product (limit to latest N for performance)
     reviews = product.reviews.order_by('-created_at')[:REVIEW_DISPLAY_LIMIT]
