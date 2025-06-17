@@ -4,6 +4,8 @@ from django.contrib.auth.decorators import login_required
 from .models import Order, OrderItem
 from cart.models import Cart, CartItem
 from cart.views import get_cart
+from .helpers import apply_discount
+from promotions.models import DiscountCode
 
 @login_required
 def checkout(request):
@@ -13,34 +15,7 @@ def checkout(request):
         return redirect('cart_detail')
     
     discount_code = request.session.get('discount_code')
-    discount_amount = 0
-    discounted_total = cart.total_price
-    
-    if discount_code:
-        try:
-            from promotions.models import DiscountCode
-            discount = DiscountCode.objects.get(code=discount_code, is_active=True)
-            from django.utils import timezone
-            now = timezone.now()
-            if discount.start_date <= now <= discount.end_date and discount.times_used < discount.usage_limit:
-                if cart.total_price >= discount.minimum_purchase:
-                    if discount.discount_type == 'percentage':
-                        discount_amount = cart.total_price * (discount.discount_value / 100)
-                    else:  # fixed_amount
-                        discount_amount = min(discount.discount_value, cart.total_price)
-                    discounted_total = cart.total_price - discount_amount
-                else:
-                    messages.error(request, f"Minimum purchase of ${discount.minimum_purchase} required for discount code {discount_code}.")
-                    del request.session['discount_code']
-                    request.session.modified = True
-            else:
-                messages.error(request, f"Discount code {discount_code} is no longer valid.")
-                del request.session['discount_code']
-                request.session.modified = True
-        except DiscountCode.DoesNotExist:
-            messages.error(request, f"Discount code {discount_code} is invalid.")
-            del request.session['discount_code']
-            request.session.modified = True
+    discount_amount, discounted_total = apply_discount(cart, request)
     
     if request.method == 'POST':
         full_name = request.POST.get('full_name')

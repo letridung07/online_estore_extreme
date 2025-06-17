@@ -17,8 +17,9 @@ def apply_discount_code(request):
             now = timezone.now()
             if discount.start_date <= now <= discount.end_date:
                 if discount.times_used < discount.usage_limit:
-                    cart = Cart.objects.get(user=request.user if request.user.is_authenticated else None, 
-                                           session_key=request.session.session_key if not request.user.is_authenticated else None)
+                    # Use a helper to get the cart for the current user/session
+                    from cart.views import get_cart
+                    cart = get_cart(request)
                     if cart.total_price >= discount.minimum_purchase:
                         request.session['discount_code'] = code
                         request.session.modified = True
