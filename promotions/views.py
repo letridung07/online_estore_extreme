@@ -17,7 +17,7 @@ def apply_discount_code(request):
             now = timezone.now()
             if discount.start_date <= now <= discount.end_date:
                 if discount.times_used < discount.usage_limit:
-                    # Use a helper to get the cart for the current user/session
+                    # Inline import to avoid circular dependency issues with cart.views
                     from cart.views import get_cart
                     cart = get_cart(request)
                     if cart.total_price >= discount.minimum_purchase:

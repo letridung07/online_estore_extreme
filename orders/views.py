@@ -47,8 +47,12 @@ def checkout(request):
         if discount_code:
             try:
                 discount = DiscountCode.objects.get(code=discount_code, is_active=True)
-                discount.times_used += 1
-                discount.save()
+                from django.db.models import F
+                from django.db import transaction
+                with transaction.atomic():
+                    discount.times_used = F('times_used') + 1
+                    discount.save(update_fields=['times_used'])
+                    discount.refresh_from_db(fields=['times_used'])
                 del request.session['discount_code']
                 request.session.modified = True
             except DiscountCode.DoesNotExist:

@@ -8,7 +8,8 @@ def apply_discount(cart, request):
     """
     discount_code = request.session.get('discount_code')
     if not discount_code:
-        return 0.0, cart.total_price
+        from decimal import Decimal
+        return Decimal('0.00'), cart.total_price
     
     try:
         discount = DiscountCode.objects.get(code=discount_code, is_active=True)
