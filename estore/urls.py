@@ -16,7 +16,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from accounts.views import profile, add_shipping_address, edit_shipping_address, edit_profile, email_preferences
+from accounts.views import profile, add_shipping_address, edit_shipping_address, edit_profile, email_preferences, delete_shipping_address
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -27,6 +27,7 @@ urlpatterns = [
     path('accounts/profile/', profile, name='profile'),
     path('accounts/profile/add-address/', add_shipping_address, name='add_shipping_address'),
     path('accounts/profile/edit-address/<int:address_id>/', edit_shipping_address, name='edit_shipping_address'),
+    path('accounts/profile/delete-address/<int:address_id>/', delete_shipping_address, name='delete_shipping_address'),
     path('accounts/profile/edit/', edit_profile, name='edit_profile'),
     path('accounts/profile/email-preferences/', email_preferences, name='email_preferences'),
     path('promotions/', include('promotions.urls')),
