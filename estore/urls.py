@@ -16,7 +16,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from accounts.views import profile, add_shipping_address, edit_shipping_address, edit_profile, email_preferences, delete_shipping_address
+from accounts.views import profile, add_shipping_address, edit_shipping_address, edit_profile, email_preferences, delete_shipping_address, wishlist, add_to_wishlist, remove_from_wishlist, move_to_cart
 
 urlpatterns = [
     path('admin/', admin.site.urls),
