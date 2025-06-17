@@ -46,6 +46,31 @@ class Review(models.Model):
         return f"{self.rating} star review for {self.product.name} by {self.user.username}"
 
 
+class Variant(models.Model):
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='variants')
+    name = models.CharField(max_length=100, help_text="Variant name (e.g., 'Red', 'Large')")
+    price_adjustment = models.DecimalField(max_digits=10, decimal_places=2, default=0.00, help_text="Price difference from base product")
+    stock = models.PositiveIntegerField(default=0)
+    sku = models.CharField(max_length=50, unique=True, blank=True, help_text="Stock Keeping Unit identifier")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name_plural = "Variants"
+        unique_together = ('product', 'name')
+
+    def __str__(self):
+        return f"{self.product.name} - {self.name}"
+
+    @property
+    def total_price(self):
+        return self.product.price + self.price_adjustment
+
+    @property
+    def is_in_stock(self):
+        return self.stock > 0
+
+
 class ProductView(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='views')
     user = models.ForeignKey('auth.User', on_delete=models.CASCADE, related_name='product_views', null=True, blank=True)

@@ -20,3 +20,12 @@ class ReviewAdmin(admin.ModelAdmin):
     list_filter = ('rating', 'created_at', 'product')
     search_fields = ('comment', 'product__name', 'user__username')
     ordering = ('-created_at',)
+
+from .models import Variant
+
+@admin.register(Variant)
+class VariantAdmin(admin.ModelAdmin):
+    list_display = ('product', 'name', 'price_adjustment', 'stock', 'created_at', 'updated_at')
+    list_filter = ('product', 'created_at')
+    search_fields = ('name', 'product__name', 'sku')
+    ordering = ('product', 'name')

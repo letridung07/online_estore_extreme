@@ -24,11 +24,14 @@ class Order(models.Model):
 class OrderItem(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    variant = models.ForeignKey('products.Variant', on_delete=models.CASCADE, null=True, blank=True, related_name='order_items')
     quantity = models.PositiveIntegerField()
     price = models.DecimalField(max_digits=10, decimal_places=2)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
+        if self.variant:
+            return f"{self.quantity} x {self.variant} in Order #{self.order.id}"
         return f"{self.quantity} x {self.product.name} in Order #{self.order.id}"
 
     @property

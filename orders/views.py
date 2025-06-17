@@ -35,11 +35,13 @@ def checkout(request):
         )
         
         for item in cart.items.all():
+            price = item.variant.total_price if item.variant else item.product.price
             OrderItem.objects.create(
                 order=order,
                 product=item.product,
+                variant=item.variant,
                 quantity=item.quantity,
-                price=item.product.price
+                price=price
             )
         
         # Clear the cart and discount code after successful order creation

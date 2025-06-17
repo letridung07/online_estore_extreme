@@ -35,6 +35,17 @@
                     <p><strong>Price:</strong> <span class="text-success h4">${{ product.price }}</span></p>
                     <p><strong>Stock:</strong> {% if product.is_in_stock %}<span class="badge bg-success">In Stock</span>{% else %}<span class="badge bg-danger">Out of Stock</span>{% endif %}</p>
                     <p><strong>Category:</strong> {{ product.category.name }}</p>
+                    {% if product.variants.all %}
+                    <div class="mb-3">
+                        <label for="variantSelect" class="form-label"><strong>Variant:</strong></label>
+                        <select name="variant" id="variantSelect" class="form-select">
+                            <option value="" data-price="{{ product.price }}" data-in-stock="{% if product.is_in_stock %}true{% else %}false{% endif %}">Default (Base Product)</option>
+                            {% for variant in product.variants.all %}
+                                <option value="{{ variant.id }}" data-price="{{ variant.total_price }}" data-in-stock="{% if variant.is_in_stock %}true{% else %}false{% endif %}">{{ variant.name }} {% if variant.price_adjustment != 0 %}(+${{ variant.price_adjustment }}){% endif %}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {% endif %}
                     <div class="accordion mt-3" id="descriptionAccordion">
                         <div class="accordion-item">
                             <h2 class="accordion-header" id="headingDescription">
@@ -49,8 +60,8 @@
                             </div>
                         </div>
                     </div>
-                    {% if product.is_in_stock %}
-                        <a href="{% url 'add_to_cart' product_id=product.id %}" class="btn btn-primary btn-lg mt-3">Add to Cart</a>
+                    {% if product.is_in_stock or product.variants.all|length > 0 %}
+                        <a href="{% url 'add_to_cart' product_id=product.id %}" id="addToCartBtn" class="btn btn-primary btn-lg mt-3" data-product-id="{{ product.id }}">Add to Cart</a>
                     {% else %}
                         <button class="btn btn-secondary btn-lg mt-3" disabled>Add to Cart</button>
                     {% endif %}
@@ -220,6 +231,34 @@
             document.getElementById('mainImage').src = src;
             document.getElementById('mainImage').alt = alt;
         }
+        
+        function updateProductInfo() {
+            const variantSelect = document.getElementById('variantSelect');
+            if (variantSelect) {
+                const selectedOption = variantSelect.options[variantSelect.selectedIndex];
+                const price = selectedOption.getAttribute('data-price');
+                const inStock = selectedOption.getAttribute('data-in-stock') === 'true';
+                document.querySelector('.product-info .text-success.h4').textContent = '$' + price;
+                const stockBadge = document.querySelector('.product-info p:nth-child(3) span');
+                stockBadge.textContent = inStock ? 'In Stock' : 'Out of Stock';
+                stockBadge.className = inStock ? 'badge bg-success' : 'badge bg-danger';
+                const addToCartBtn = document.getElementById('addToCartBtn');
+                if (addToCartBtn) {
+                    addToCartBtn.disabled = !inStock;
+                    const baseUrl = addToCartBtn.getAttribute('href').split('?')[0];
+                    const variantId = selectedOption.value ? `?variant_id=${selectedOption.value}` : '';
+                    addToCartBtn.setAttribute('href', baseUrl + variantId);
+                }
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            const variantSelect = document.getElementById('variantSelect');
+            if (variantSelect) {
+                variantSelect.addEventListener('change', updateProductInfo);
+                updateProductInfo(); // Initial call to set correct values
+            }
+        });
         
         document.getElementById('mainImage').addEventListener('click', function() {
             document.getElementById('zoomedImage').src = this.src;
