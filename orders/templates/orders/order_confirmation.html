@@ -26,13 +26,15 @@
                         <ul class="list-group list-group-flush">
                             {% for item in order.items.all %}
                                 <li class="list-group-item d-flex justify-content-between align-items-center">
-                                    {{ item.product.name }} (x{{ item.quantity }})
-                                <!-- Debug: Check if variant exists -->
-                                {% if item.variant %}
-                                    <br><small>Variant: {{ item.variant.name }}</small>
-                                {% else %}
-                                    <br><small>Debug: No variant associated with this item.</small>
-                                {% endif %}
+                                    <div>
+                                        {{ item.product.name }} (x{{ item.quantity }})
+                                        {% if item.variant %}
+                                            <br><small>Variant: {{ item.variant.name }}</small>
+                                        {% endif %}
+                                    </div>
+                                    <span>${{ item.price }}</span>
+                                </li>
+                        {% endfor %}
                         </ul>
                     </div>
                 </div>
