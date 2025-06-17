@@ -121,3 +121,12 @@ def email_preferences(request):
             'profile': profile,
         }
         return render(request, 'accounts/email_preferences.html', context)
+
+@login_required
+def delete_shipping_address(request, address_id):
+    try:
+        address = ShippingAddress.objects.get(id=address_id, user=request.user)
+        address.delete()
+    except ShippingAddress.DoesNotExist:
+        pass  # Address not found or not owned by user, silently redirect
+    return redirect('profile')
