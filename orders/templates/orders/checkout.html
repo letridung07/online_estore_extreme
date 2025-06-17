@@ -7,7 +7,7 @@
     <div class="container mt-4">
         <h1 class="mb-4">Checkout</h1>
         
-        {% if cart.items.exists() %}
+        {% if cart.items %}
             <div class="row">
                 <div class="col-lg-8">
                     <div class="accordion" id="checkoutAccordion">
