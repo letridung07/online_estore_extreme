@@ -90,7 +90,7 @@
                 <p><strong>Category:</strong> {{ product.category.name }}</p>
                 <p><strong>Description:</strong> {{ product.description|default:"No description available." }}</p>
                 {% if product.is_in_stock %}
-                    <a href="#" class="btn">Add to Cart</a>
+                    <a href="{% url 'add_to_cart' product_id=product.id %}" class="btn">Add to Cart</a>
                 {% else %}
                     <p class="btn" style="background-color: #ccc; cursor: not-allowed;">Add to Cart</p>
                 {% endif %}
