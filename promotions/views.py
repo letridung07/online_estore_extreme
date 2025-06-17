@@ -10,7 +10,7 @@ def apply_discount_code(request):
         code = request.POST.get('discount_code', '').strip()
         if not code:
             messages.error(request, "Please enter a discount code.")
-            return redirect('cart:cart_detail')
+            return redirect('cart_detail')
         
         try:
             discount = DiscountCode.objects.get(code=code, is_active=True)
@@ -32,8 +32,8 @@ def apply_discount_code(request):
         except DiscountCode.DoesNotExist:
             messages.error(request, "Invalid discount code.")
         
-        return redirect('cart:cart_detail')
-    return redirect('cart:cart_detail')
+        return redirect('cart_detail')
+    return redirect('cart_detail')
 
 def current_promotions(request):
     now = timezone.now()
