@@ -19,14 +19,13 @@ def checkout(request):
         postal_code = request.POST.get('postal_code')
         country = request.POST.get('country')
         
+        # Concatenate shipment information into a single string for shipping_address
+        shipping_address = f"Full Name: {full_name}, Address: {address}, City: {city}, Postal Code: {postal_code}, Country: {country}"
+        
         order = Order.objects.create(
             user=request.user,
             total_price=cart.total_price,
-            full_name=full_name,
-            address=address,
-            city=city,
-            postal_code=postal_code,
-            country=country,
+            shipping_address=shipping_address,
             status='pending'
         )
         
