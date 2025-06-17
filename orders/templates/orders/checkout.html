@@ -135,6 +135,9 @@
                                 {% for item in cart.items.all %}
                                     <li class="list-group-item d-flex justify-content-between align-items-center">
                                         {{ item.product.name }} (x{{ item.quantity }})
+                                        {% if item.variant %}
+                                            <br><small>Variant: {{ item.variant.name }}</small>
+                                        {% endif %}
                                         <span>${{ item.total_price }}</span>
                                     </li>
                                 {% endfor %}

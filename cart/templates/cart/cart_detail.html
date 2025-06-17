@@ -36,8 +36,19 @@
                         <tbody>
                             {% for item in cart.items.all %}
                                 <tr>
-                                    <td>{{ item.product.name }}</td>
-                                    <td>${{ item.product.price }}</td>
+                                    <td>
+                                        {{ item.product.name }}
+                                        {% if item.variant %}
+                                            <br><small>Variant: {{ item.variant.name }}</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if item.variant %}
+                                            ${{ item.variant.total_price }}
+                                        {% else %}
+                                            ${{ item.product.price }}
+                                        {% endif %}
+                                    </td>
                                     <td>
                                         <form id="form_{{ item.id }}" method="POST" action="{% url 'update_cart_item' item_id=item.id %}">
                                             {% csrf_token %}
