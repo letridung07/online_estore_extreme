@@ -3,7 +3,7 @@ from .models import Order, OrderItem, ShippingMethod
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
-    list_display = ('id', 'user', 'total_price', 'status', 'shipping_address', 'shipping_method', 'created_at')
+    list_display = ('id', 'user', 'total_price', 'status', 'created_at')
     list_filter = ('status', 'created_at')
     search_fields = ('user__username', 'id')
     readonly_fields = ('created_at', 'updated_at')
