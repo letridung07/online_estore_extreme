@@ -30,5 +30,9 @@ urlpatterns = [
     path('accounts/profile/delete-address/<int:address_id>/', delete_shipping_address, name='delete_shipping_address'),
     path('accounts/profile/edit/', edit_profile, name='edit_profile'),
     path('accounts/profile/email-preferences/', email_preferences, name='email_preferences'),
+    path('accounts/wishlist/', wishlist, name='wishlist'),
+    path('accounts/wishlist/add/<int:product_id>/', add_to_wishlist, name='add_to_wishlist'),
+    path('accounts/wishlist/remove/<int:item_id>/', remove_from_wishlist, name='remove_from_wishlist'),
+    path('accounts/wishlist/move-to-cart/<int:item_id>/', move_to_cart, name='move_to_cart'),
     path('promotions/', include('promotions.urls')),
 ]

@@ -28,10 +28,12 @@
                     {% if shipping_addresses %}
                         {% for address in shipping_addresses %}
                             <div class="mb-3">
-                                <p><strong>Street:</strong> {{ address.street }}</p>
+                                <p><strong>Full Name:</strong> {{ address.full_name }}</p>
+                                <p><strong>Address Line 1:</strong> {{ address.address_line_1 }}</p>
+                                <p><strong>Address Line 2:</strong> {{ address.address_line_2|default:"N/A" }}</p>
                                 <p><strong>City:</strong> {{ address.city }}</p>
                                 <p><strong>State:</strong> {{ address.state|default:"N/A" }}</p>
-                                <p><strong>ZIP Code:</strong> {{ address.zip_code }}</p>
+                                <p><strong>Postal Code:</strong> {{ address.postal_code }}</p>
                                 <p><strong>Country:</strong> {{ address.country }}</p>
                                 {% if address.is_default %}
                                     <p><strong>Default Address</strong></p>
@@ -95,9 +97,10 @@
                     <h2>Account Settings</h2>
                 </div>
                 <div class="card-body">
-                    <div class="d-flex gap-2">
+                    <div class="d-flex gap-2 flex-wrap">
                         <a href="{% url 'password_change' %}" class="btn btn-outline-primary">Change Password</a>
                         <a href="{% url 'email_preferences' %}" class="btn btn-outline-primary">Email Preferences</a>
+                        <a href="{% url 'wishlist' %}" class="btn btn-outline-primary">My Wishlist</a>
                     </div>
                 </div>
             </div>

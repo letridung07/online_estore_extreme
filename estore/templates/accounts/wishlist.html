@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1 class="mb-4">My Wishlist</h1>
+    {% if wishlist_items %}
+        <div class="row">
+            {% for item in wishlist_items %}
+                <div class="col-md-4 mb-3">
+                    <div class="card">
+                        {% if item.product.image %}
+                            <img src="{{ item.product.image.url }}" class="card-img-top" alt="{{ item.product.name }}" style="height: 200px; object-fit: cover;">
+                        {% else %}
+                            <img src="https://via.placeholder.com/300x200?text=No+Image" class="card-img-top" alt="No Image" style="height: 200px; object-fit: cover;">
+                        {% endif %}
+                        <div class="card-body">
+                            <h5 class="card-title">{{ item.product.name }}</h5>
+                            <p class="card-text">Price: ${{ item.product.price }}</p>
+                            {% if item.product.is_in_stock %}
+                                <p class="text-success">In Stock</p>
+                            {% else %}
+                                <p class="text-danger">Out of Stock</p>
+                            {% endif %}
+                            <p class="card-text">Added on: {{ item.added_at|date:"F d, Y" }}</p>
+                            <div class="d-flex justify-content-between">
+                                {% if item.product.is_in_stock %}
+                                    <a href="{% url 'move_to_cart' item.id %}" class="btn btn-primary btn-sm">Move to Cart</a>
+                                {% endif %}
+                                <a href="{% url 'remove_from_wishlist' item.id %}" class="btn btn-danger btn-sm">Remove</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="text-muted">Your wishlist is empty. Start adding products you love!</p>
+        <a href="{% url 'product_list' %}" class="btn btn-primary mt-3">Browse Products</a>
+    {% endif %}
+</div>
+{% endblock %}

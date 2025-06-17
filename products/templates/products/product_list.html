@@ -58,10 +58,13 @@
                         {% if not product.is_in_stock %}
                             <span class="badge bg-danger position-absolute top-0 start-0 m-2">Out of Stock</span>
                         {% endif %}
-                        <div class="card-overlay position-absolute top-0 start-0 w-100 h-100 d-flex flex-column justify-content-center align-items-center bg-dark bg-opacity-50 text-white" style="opacity: 0; transition: opacity 0.3s ease;">
-                            <button class="btn btn-light btn-sm mb-2" onclick="addToCart('{{ product.pk }}')" {% if not product.is_in_stock %}disabled{% endif %}>Add to Cart</button>
-                            <button class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#quickViewModal{{ product.pk }}">Quick View</button>
-                        </div>
+                                <div class="card-overlay position-absolute top-0 start-0 w-100 h-100 d-flex flex-column justify-content-center align-items-center bg-dark bg-opacity-50 text-white" style="opacity: 0; transition: opacity 0.3s ease;">
+                                    <button class="btn btn-light btn-sm mb-2" onclick="addToCart('{{ product.pk }}')" {% if not product.is_in_stock %}disabled{% endif %}>Add to Cart</button>
+                                    {% if user.is_authenticated %}
+                                        <a href="{% url 'add_to_wishlist' product_id=product.id %}" class="btn btn-light btn-sm mb-2">Add to Wishlist</a>
+                                    {% endif %}
+                                    <button class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#quickViewModal{{ product.pk }}">Quick View</button>
+                                </div>
                         <div class="card-body text-center">
                             <h5 class="card-title">{{ product.name }}</h5>
                             <p class="card-text">Price: ${{ product.price }}</p>
@@ -160,6 +163,9 @@
                                 {% endif %}
                                 <div class="card-overlay position-absolute top-0 start-0 w-100 h-100 d-flex flex-column justify-content-center align-items-center bg-dark bg-opacity-50 text-white" style="opacity: 0; transition: opacity 0.3s ease;">
                                     <button class="btn btn-light btn-sm mb-2" onclick="addToCart('{{ product.pk }}')" {% if not product.is_in_stock %}disabled{% endif %}>Add to Cart</button>
+                                    {% if user.is_authenticated %}
+                                        <a href="{% url 'add_to_wishlist' product_id=product.id %}" class="btn btn-light btn-sm mb-2">Add to Wishlist</a>
+                                    {% endif %}
                                     <button class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#quickViewModalPopular{{ product.pk }}">Quick View</button>
                                 </div>
                                 <div class="card-body text-center">
