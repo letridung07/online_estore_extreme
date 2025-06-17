@@ -16,10 +16,13 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from accounts.views import profile_redirect
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('products/', include('products.urls')),
     path('cart/', include('cart.urls')),
     path('orders/', include('orders.urls')),
+    path('accounts/', include('django.contrib.auth.urls')),
+    path('accounts/profile/', profile_redirect, name='profile_redirect'),
 ]

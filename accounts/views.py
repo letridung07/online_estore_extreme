@@ -1,3 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import redirect
 
-# Create your views here.
+def profile_redirect(request):
+    return redirect('/products/')

@@ -20,7 +20,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-#!$c=4lr%!9&*-2^%#_av5_#399l9kzsdoa7i$6=#i4ouxufdx'
+SECRET_KEY = 'django-insecure-@v=1#n2$z^9k8l!m3p5q7r4t6y8u0i2o4e6g8j0k2m4n6p8q0r2t4'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -29,7 +29,6 @@ ALLOWED_HOSTS = []
 
 
 # Application definition
-
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -37,11 +36,11 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'products.apps.ProductsConfig',
-    'cart.apps.CartConfig',
-    'accounts.apps.AccountsConfig',
-    'orders.apps.OrdersConfig',
-    'payments.apps.PaymentsConfig',
+    'products',
+    'cart',
+    'orders',
+    'payments',
+    'accounts',
 ]
 
 MIDDLEWARE = [
@@ -59,10 +58,11 @@ ROOT_URLCONF = 'estore.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'estore/templates'],
+        'DIRS': [BASE_DIR / 'estore' / 'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
+                'django.template.context_processors.debug',
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
@@ -121,8 +121,14 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
+STATICFILES_DIRS = [
+    BASE_DIR / "static",
+]
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Custom settings for login redirect
+LOGIN_REDIRECT_URL = '/products/'

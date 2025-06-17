@@ -34,3 +34,18 @@ class OrderItem(models.Model):
     @property
     def total_price(self):
         return self.price * self.quantity
+
+class ShippingMethod(models.Model):
+    name = models.CharField(max_length=100)
+    description = models.TextField(blank=True)
+    cost = models.DecimalField(max_digits=10, decimal_places=2)
+    estimated_delivery_days = models.PositiveIntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.name} ({self.cost}) - Est. {self.estimated_delivery_days} days"
+
+    class Meta:
+        verbose_name_plural = "Shipping Methods"
