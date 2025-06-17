@@ -95,8 +95,10 @@
                     <h2>Account Settings</h2>
                 </div>
                 <div class="card-body">
-                    <a href="{% url 'password_change' %}" class="btn btn-outline-primary mb-2">Change Password</a>
-                    <a href="{% url 'email_preferences' %}" class="btn btn-outline-primary">Email Preferences</a>
+                    <div class="d-flex gap-2">
+                        <a href="{% url 'password_change' %}" class="btn btn-outline-primary">Change Password</a>
+                        <a href="{% url 'email_preferences' %}" class="btn btn-outline-primary">Email Preferences</a>
+                    </div>
                 </div>
             </div>
         </div>
