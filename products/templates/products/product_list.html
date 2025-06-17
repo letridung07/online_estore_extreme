@@ -141,6 +141,71 @@
                 </ul>
             </nav>
         {% endif %}
+        
+        <!-- Popular Products Section -->
+        {% if popular_products %}
+            <div class="mt-5">
+                <h3 class="mb-3">Popular Products</h3>
+                <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-5 g-4">
+                    {% for product in popular_products %}
+                        <div class="col">
+                            <div class="card h-100 position-relative">
+                                {% if product.image %}
+                                    <img src="{{ product.image.url }}" class="card-img-top" alt="{{ product.name }}" style="height: 200px; object-fit: cover; transition: opacity 0.3s ease;">
+                                {% else %}
+                                    <img src="https://via.placeholder.com/150" class="card-img-top" alt="No image available" style="height: 200px; object-fit: cover; transition: opacity 0.3s ease;">
+                                {% endif %}
+                                {% if not product.is_in_stock %}
+                                    <span class="badge bg-danger position-absolute top-0 start-0 m-2">Out of Stock</span>
+                                {% endif %}
+                                <div class="card-overlay position-absolute top-0 start-0 w-100 h-100 d-flex flex-column justify-content-center align-items-center bg-dark bg-opacity-50 text-white" style="opacity: 0; transition: opacity 0.3s ease;">
+                                    <button class="btn btn-light btn-sm mb-2" onclick="addToCart('{{ product.pk }}')" {% if not product.is_in_stock %}disabled{% endif %}>Add to Cart</button>
+                                    <button class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#quickViewModalPopular{{ product.pk }}">Quick View</button>
+                                </div>
+                                <div class="card-body text-center">
+                                    <h5 class="card-title">{{ product.name }}</h5>
+                                    <p class="card-text">Price: ${{ product.price }}</p>
+                                    <a href="{% url 'product_detail' pk=product.pk %}" class="btn btn-outline-primary btn-sm">View Details</a>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Quick View Modal for Popular Products -->
+                        <div class="modal fade" id="quickViewModalPopular{{ product.pk }}" tabindex="-1" aria-labelledby="quickViewModalLabelPopular{{ product.pk }}" aria-hidden="true">
+                            <div class="modal-dialog modal-lg">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="quickViewModalLabelPopular{{ product.pk }}">{{ product.name }}</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                {% if product.image %}
+                                                    <img src="{{ product.image.url }}" class="img-fluid" alt="{{ product.name }}" style="max-height: 300px; object-fit: cover;">
+                                                {% else %}
+                                                    <img src="https://via.placeholder.com/150" class="img-fluid" alt="No image available" style="max-height: 300px; object-fit: cover;">
+                                                {% endif %}
+                                            </div>
+                                            <div class="col-md-6">
+                                                <h4>Price: ${{ product.price }}</h4>
+                                                <p><strong>Stock:</strong> {% if product.is_in_stock %}In Stock{% else %}Out of Stock{% endif %}</p>
+                                                <p><strong>Description:</strong> {{ product.description|truncatewords:30 }}</p>
+                                                <button class="btn btn-primary" onclick="addToCart('{{ product.pk }}')" {% if not product.is_in_stock %}disabled{% endif %}>Add to Cart</button>
+                                                <a href="{% url 'product_detail' pk=product.pk %}" class="btn btn-outline-secondary">View Full Details</a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
     </div>
     <style>
         .card:hover .card-img-top {
