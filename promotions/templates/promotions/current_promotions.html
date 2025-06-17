@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1>Current Promotions & Sales</h1>
+    
+    {% if promotions or sales %}
+        {% if promotions %}
+            <h2>Promotions</h2>
+            <div class="row">
+                {% for promotion in promotions %}
+                    <div class="col-md-6 mb-3">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">{{ promotion.name }}</h5>
+                                <p class="card-text">{{ promotion.description }}</p>
+                                <p class="card-text">
+                                    <strong>Type:</strong> {{ promotion.get_promotion_type_display }}<br>
+                                    {% if promotion.promotion_type != 'free_shipping' and promotion.promotion_type != 'bogo' %}
+                                        <strong>Value:</strong> 
+                                        {% if promotion.promotion_type == 'percentage' %}
+                                            {{ promotion.value }}%
+                                        {% else %}
+                                            ${{ promotion.value }}
+                                        {% endif %}<br>
+                                    {% endif %}
+                                    {% if promotion.minimum_purchase > 0 %}
+                                        <strong>Minimum Purchase:</strong> ${{ promotion.minimum_purchase }}<br>
+                                    {% endif %}
+                                    <strong>Valid Until:</strong> {{ promotion.end_date|date:"F d, Y" }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+        
+        {% if sales %}
+            <h2>Sale Events</h2>
+            <div class="row">
+                {% for sale in sales %}
+                    <div class="col-md-6 mb-3">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">{{ sale.name }}</h5>
+                                <p class="card-text">{{ sale.description }}</p>
+                                <p class="card-text">
+                                    <strong>Discount:</strong> {{ sale.discount_percentage }}% off<br>
+                                    <strong>Valid Until:</strong> {{ sale.end_date|date:"F d, Y" }}
+                                </p>
+                                <a href="{% url 'products:product_list' %}" class="btn btn-primary">Shop Now</a>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% else %}
+        <p class="text-muted">There are no active promotions or sales at the moment. Check back later for exciting offers!</p>
+        <a href="{% url 'products:product_list' %}" class="btn btn-primary">Browse Products</a>
+    {% endif %}
+</div>
+{% endblock %}

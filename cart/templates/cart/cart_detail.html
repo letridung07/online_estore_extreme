@@ -65,7 +65,17 @@
                             <p class="card-text">Subtotal: ${{ cart.total_price }}</p>
                             <p class="card-text">Shipping: TBD</p>
                             <p class="card-text">Tax: TBD</p>
+                            {% if request.session.discount_code %}
+                                <p class="card-text text-success">Discount Applied: {{ request.session.discount_code }}</p>
+                            {% endif %}
                             <h4>Total: ${{ cart.total_price }}</h4>
+                            <form method="POST" action="{% url 'promotions:apply_discount' %}" class="mb-3">
+                                {% csrf_token %}
+                                <div class="input-group">
+                                    <input type="text" name="discount_code" class="form-control" placeholder="Enter Discount Code">
+                                    <button type="submit" class="btn btn-outline-secondary">Apply</button>
+                                </div>
+                            </form>
                             <a href="{% url 'checkout' %}" class="btn btn-primary w-100">Proceed to Checkout</a>
                         </div>
                     </div>

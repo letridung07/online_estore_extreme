@@ -25,4 +25,5 @@ urlpatterns = [
     path('orders/', include('orders.urls')),
     path('accounts/', include('django.contrib.auth.urls')),
     path('accounts/profile/', profile_redirect, name='profile_redirect'),
+    path('promotions/', include('promotions.urls')),
 ]
