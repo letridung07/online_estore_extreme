@@ -1,4 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from .models import UserProfile, ShippingAddress, Wishlist, WishlistItem
@@ -157,11 +158,17 @@ def add_to_wishlist(request, product_id):
     except Wishlist.DoesNotExist:
         wishlist = Wishlist.objects.create(user=user)
     
+    response_data = {}
     if not WishlistItem.objects.filter(wishlist=wishlist, product=product).exists():
         WishlistItem.objects.create(wishlist=wishlist, product=product)
         messages.success(request, f"{product.name} has been added to your wishlist.")
+        response_data['status'] = 'added'
     else:
         messages.info(request, f"{product.name} is already in your wishlist.")
+        response_data['status'] = 'exists'
+    
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return JsonResponse(response_data)
     return redirect(request.META.get('HTTP_REFERER', 'product_detail'), pk=product_id)
 
 @login_required
