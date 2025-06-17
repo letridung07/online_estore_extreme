@@ -156,17 +156,26 @@
     </div>
     <script>
         // Script to update total cost based on shipping method selection
-        document.getElementById('shippingMethod').addEventListener('change', function() {
-            let shippingCost = 5.00;
-            if (this.value === 'express') {
-                shippingCost = 10.00;
-            } else if (this.value === 'overnight') {
-                shippingCost = 20.00;
+        document.addEventListener('DOMContentLoaded', function() {
+            const shippingMethod = document.getElementById('shippingMethod');
+            const shippingCostElement = document.getElementById('shippingCost');
+            const totalCostElement = document.getElementById('totalCost');
+            const subtotal = parseFloat('{{ discounted_total|floatformat:2 }}') || 0.00;
+
+            function updateTotalCost() {
+                let shippingCost = 5.00;
+                if (shippingMethod.value === 'express') {
+                    shippingCost = 10.00;
+                } else if (shippingMethod.value === 'overnight') {
+                    shippingCost = 20.00;
+                }
+                shippingCostElement.textContent = '$' + shippingCost.toFixed(2);
+                const total = subtotal + shippingCost;
+                totalCostElement.textContent = '$' + total.toFixed(2);
             }
-            document.getElementById('shippingCost').textContent = '$' + shippingCost.toFixed(2);
-            const subtotal = parseFloat('{{ discounted_total }}');
-            const total = subtotal + shippingCost;
-            document.getElementById('totalCost').textContent = '$' + total.toFixed(2);
+
+            shippingMethod.addEventListener('change', updateTotalCost);
+            updateTotalCost(); // Initial call to set the total correctly on page load
         });
     </script>
 {% endblock %}
