@@ -27,9 +27,12 @@
                             {% for item in order.items.all %}
                                 <li class="list-group-item d-flex justify-content-between align-items-center">
                                     {{ item.product.name }} (x{{ item.quantity }})
-                                    <span>${{ item.total_price }}</span>
-                                </li>
-                            {% endfor %}
+                                <!-- Debug: Check if variant exists -->
+                                {% if item.variant %}
+                                    <br><small>Variant: {{ item.variant.name }}</small>
+                                {% else %}
+                                    <br><small>Debug: No variant associated with this item.</small>
+                                {% endif %}
                         </ul>
                     </div>
                 </div>
