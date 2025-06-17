@@ -172,6 +172,26 @@ def add_to_wishlist(request, product_id):
     return redirect(request.META.get('HTTP_REFERER', 'product_detail'), pk=product_id)
 
 @login_required
+def remove_from_wishlist_ajax(request, product_id):
+    user = request.user
+    product = get_object_or_404(Product, id=product_id)
+    try:
+        wishlist = user.wishlist.get()
+        wishlist_item = WishlistItem.objects.filter(wishlist=wishlist, product=product).first()
+        if wishlist_item:
+            wishlist_item.delete()
+            messages.success(request, f"{product.name} has been removed from your wishlist.")
+            response_data = {'status': 'removed'}
+        else:
+            response_data = {'status': 'not_found'}
+    except Wishlist.DoesNotExist:
+        response_data = {'status': 'not_found'}
+    
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return JsonResponse(response_data)
+    return redirect(request.META.get('HTTP_REFERER', 'product_detail'), pk=product_id)
+
+@login_required
 def remove_from_wishlist(request, item_id):
     user = request.user
     wishlist_item = get_object_or_404(WishlistItem, id=item_id, wishlist__user=user)

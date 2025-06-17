@@ -55,9 +55,9 @@
                         <button class="btn btn-secondary btn-lg mt-3" disabled>Add to Cart</button>
                     {% endif %}
                     {% if user.is_authenticated %}
-                        <a href="{% url 'add_to_wishlist' product_id=product.id %}" class="btn btn-outline-danger btn-lg mt-3 wishlist-btn" data-product-id="{{ product.id }}">
-                            <span class="wishlist-text">Add to Wishlist</span>
-                            <span class="heart-icon" style="display: none;">&#10084;</span>
+                        <a href="{% url 'add_to_wishlist' product_id=product.id %}" class="btn btn-outline-danger btn-lg mt-3 wishlist-btn" data-product-id="{{ product.id }}" data-in-wishlist="{% if product_in_wishlist %}true{% else %}false{% endif %}">
+                            <span class="wishlist-text">{% if product_in_wishlist %}Remove from Wishlist{% else %}Add to Wishlist{% endif %}</span>
+                            <span class="wishlist-icon" style="display: none;">{% if product_in_wishlist %}❌{% else %}✔️{% endif %}</span>
                         </a>
                     {% endif %}
                 </div>
@@ -161,29 +161,47 @@
     </div>
     
     <style>
-        .wishlist-btn .heart-icon {
-            color: red;
+        .wishlist-btn {
+            position: relative;
+            overflow: hidden;
+        }
+        .wishlist-btn .wishlist-icon {
             font-size: 1.2em;
             margin-left: 5px;
+            transition: transform 0.3s ease;
         }
-        .wishlist-btn .heart-icon.animate {
+        .wishlist-btn .wishlist-icon.animate {
             display: inline-block;
-            animation: heartbeat 1.5s ease-in-out;
+            animation: pulse 1s ease-in-out;
         }
-        @keyframes heartbeat {
+        @keyframes pulse {
             0%, 100% { transform: scale(1); }
-            20%, 60% { transform: scale(1.3); }
-            40%, 80% { transform: scale(1); }
+            50% { transform: scale(1.1); }
         }
         .wishlist-btn.added {
-            border-color: red;
-            color: red;
+            border-color: green;
+            color: green;
         }
         .wishlist-btn.added .wishlist-text {
-            display: none;
-        }
-        .wishlist-btn.added .heart-icon {
             display: inline-block;
+        }
+        .wishlist-btn.added .wishlist-icon {
+            display: inline-block;
+            color: green;
+        }
+        .wishlist-btn::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 128, 0, 0.1);
+            top: 0;
+            left: 0;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .wishlist-btn.added::after {
+            opacity: 1;
         }
     </style>
     <script>
@@ -202,11 +220,18 @@
 
         document.addEventListener('DOMContentLoaded', function() {
             document.querySelectorAll('.wishlist-btn').forEach(button => {
+                const inWishlist = button.getAttribute('data-in-wishlist') === 'true';
+                if (inWishlist) {
+                    button.classList.add('added');
+                    button.querySelector('.wishlist-icon').style.display = 'inline-block';
+                }
+                
                 button.addEventListener('click', function(e) {
                     e.preventDefault();
                     const productId = this.getAttribute('data-product-id');
-                    const url = this.getAttribute('href');
-                    const heartIcon = this.querySelector('.heart-icon');
+                    const inWishlist = this.getAttribute('data-in-wishlist') === 'true';
+                    const url = inWishlist ? `/accounts/wishlist/remove/${productId}/` : `/accounts/wishlist/add/${productId}/`;
+                    const icon = this.querySelector('.wishlist-icon');
                     const wishlistText = this.querySelector('.wishlist-text');
                     
                     fetch(url, {
@@ -219,15 +244,35 @@
                     .then(response => response.json())
                     .then(data => {
                         if (data.status === 'added') {
-                            heartIcon.classList.add('animate');
                             this.classList.add('added');
-                            wishlistText.textContent = 'Added to Wishlist';
+                            this.setAttribute('data-in-wishlist', 'true');
+                            icon.textContent = '❌';
+                            icon.style.display = 'inline-block';
+                            icon.classList.add('animate');
+                            wishlistText.textContent = 'Remove from Wishlist';
                             setTimeout(() => {
-                                heartIcon.classList.remove('animate');
-                            }, 1500);
+                                icon.classList.remove('animate');
+                            }, 1000);
+                        } else if (data.status === 'removed') {
+                            this.classList.remove('added');
+                            this.setAttribute('data-in-wishlist', 'false');
+                            icon.textContent = '✔️';
+                            icon.style.display = 'none';
+                            icon.classList.add('animate');
+                            wishlistText.textContent = 'Add to Wishlist';
+                            setTimeout(() => {
+                                icon.classList.remove('animate');
+                            }, 1000);
                         } else if (data.status === 'exists') {
                             this.classList.add('added');
-                            wishlistText.textContent = 'Already in Wishlist';
+                            this.setAttribute('data-in-wishlist', 'true');
+                            icon.textContent = '❌';
+                            icon.style.display = 'inline-block';
+                            wishlistText.textContent = 'Remove from Wishlist';
+                            icon.classList.add('animate');
+                            setTimeout(() => {
+                                icon.classList.remove('animate');
+                            }, 1000);
                         }
                     })
                     .catch(error => {
