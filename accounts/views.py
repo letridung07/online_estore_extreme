@@ -24,7 +24,7 @@ def profile(request):
     return render(request, 'accounts/profile.html', context)
 
 from django.forms import ModelForm
-from .models import ShippingAddress
+from .models import ShippingAddress, UserProfile
 
 class ShippingAddressForm(ModelForm):
     class Meta:
@@ -62,3 +62,40 @@ def edit_shipping_address(request, address_id):
     else:
         form = ShippingAddressForm(instance=address)
     return render(request, 'accounts/add_address.html', {'form': form, 'editing': True, 'address_id': address_id})
+
+from django.contrib.auth.forms import UserChangeForm
+
+class UserProfileForm(UserChangeForm):
+    class Meta:
+        model = User
+        fields = ['first_name', 'last_name', 'email']
+
+class ProfileDetailsForm(ModelForm):
+    class Meta:
+        model = UserProfile
+        fields = ['address', 'phone_number']
+
+@login_required
+def edit_profile(request):
+    user = request.user
+    try:
+        profile = user.profile
+    except UserProfile.DoesNotExist:
+        profile = UserProfile.objects.create(user=user)
+    
+    if request.method == 'POST':
+        user_form = UserProfileForm(request.POST, instance=user)
+        profile_form = ProfileDetailsForm(request.POST, instance=profile)
+        if user_form.is_valid() and profile_form.is_valid():
+            user_form.save()
+            profile_form.save()
+            return redirect('profile')
+    else:
+        user_form = UserProfileForm(instance=user)
+        profile_form = ProfileDetailsForm(instance=profile)
+    
+    context = {
+        'user_form': user_form,
+        'profile_form': profile_form,
+    }
+    return render(request, 'accounts/edit_profile.html', context)

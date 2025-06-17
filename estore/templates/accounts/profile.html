@@ -15,7 +15,7 @@
                     <p><strong>Full Name:</strong> {{ user.get_full_name }}</p>
                     <p><strong>Address:</strong> {{ profile.address|default:"Not provided" }}</p>
                     <p><strong>Phone Number:</strong> {{ profile.phone_number|default:"Not provided" }}</p>
-                    <a href="#" class="btn btn-primary">Edit Information</a>
+                    <a href="{% url 'edit_profile' %}" class="btn btn-primary">Edit Information</a>
                 </div>
             </div>
         </div>
