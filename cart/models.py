@@ -18,13 +18,18 @@ class Cart(models.Model):
 class CartItem(models.Model):
     cart = models.ForeignKey(Cart, on_delete=models.CASCADE, related_name='items')
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    variant = models.ForeignKey('products.Variant', on_delete=models.CASCADE, null=True, blank=True, related_name='cart_items')
     quantity = models.PositiveIntegerField(default=1)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
+        if self.variant:
+            return f"{self.quantity} x {self.variant} in cart"
         return f"{self.quantity} x {self.product.name} in cart"
 
     @property
     def total_price(self):
+        if self.variant:
+            return self.variant.total_price * self.quantity
         return self.product.price * self.quantity

@@ -21,26 +21,50 @@ def cart_detail(request):
     })
 
 def add_to_cart(request, product_id):
+    from products.models import Variant
     product = get_object_or_404(Product, id=product_id)
     cart = get_cart(request)
+    variant_id = request.GET.get('variant_id')
+    variant = None
     
-    if product.is_in_stock:
-        cart_item, created = CartItem.objects.get_or_create(
-            cart=cart,
-            product=product,
-            defaults={'quantity': 1}
-        )
-        if not created:
-            if cart_item.quantity < product.stock:
-                cart_item.quantity += 1
-                cart_item.save()
-                messages.success(request, f"Added {product.name} to your cart.")
+    if variant_id:
+        variant = get_object_or_404(Variant, id=variant_id, product=product)
+        if variant.is_in_stock:
+            cart_item, created = CartItem.objects.get_or_create(
+                cart=cart,
+                product=product,
+                variant=variant,
+                defaults={'quantity': 1}
+            )
+            if not created:
+                if cart_item.quantity < variant.stock:
+                    cart_item.quantity += 1
+                    cart_item.save()
+                    messages.success(request, f"Added {variant} to your cart.")
+                else:
+                    messages.error(request, f"Sorry, only {variant.stock} of {variant} are in stock.")
             else:
-                messages.error(request, f"Sorry, only {product.stock} of {product.name} are in stock.")
+                messages.success(request, f"Added {variant} to your cart.")
         else:
-            messages.success(request, f"Added {product.name} to your cart.")
+            messages.error(request, f"Sorry, {variant} is out of stock.")
     else:
-        messages.error(request, f"Sorry, {product.name} is out of stock.")
+        if product.is_in_stock:
+            cart_item, created = CartItem.objects.get_or_create(
+                cart=cart,
+                product=product,
+                defaults={'quantity': 1}
+            )
+            if not created:
+                if cart_item.quantity < product.stock:
+                    cart_item.quantity += 1
+                    cart_item.save()
+                    messages.success(request, f"Added {product.name} to your cart.")
+                else:
+                    messages.error(request, f"Sorry, only {product.stock} of {product.name} are in stock.")
+            else:
+                messages.success(request, f"Added {product.name} to your cart.")
+        else:
+            messages.error(request, f"Sorry, {product.name} is out of stock.")
     
     return redirect('cart_detail')
 
