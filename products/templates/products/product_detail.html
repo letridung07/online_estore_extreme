@@ -230,7 +230,7 @@
                     e.preventDefault();
                     const productId = this.getAttribute('data-product-id');
                     const inWishlist = this.getAttribute('data-in-wishlist') === 'true';
-                    const url = inWishlist ? `/accounts/wishlist/remove/${productId}/` : `/accounts/wishlist/add/${productId}/`;
+                    const url = inWishlist ? `/accounts/wishlist/remove-ajax/${productId}/` : `/accounts/wishlist/add/${productId}/`;
                     const icon = this.querySelector('.wishlist-icon');
                     const wishlistText = this.querySelector('.wishlist-text');
                     

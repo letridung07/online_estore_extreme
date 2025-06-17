@@ -16,7 +16,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from accounts.views import profile, add_shipping_address, edit_shipping_address, edit_profile, email_preferences, delete_shipping_address, wishlist, add_to_wishlist, remove_from_wishlist, move_to_cart
+from accounts.views import profile, add_shipping_address, edit_shipping_address, edit_profile, email_preferences, delete_shipping_address, wishlist, add_to_wishlist, remove_from_wishlist, remove_from_wishlist_ajax, move_to_cart
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -33,6 +33,7 @@ urlpatterns = [
     path('accounts/wishlist/', wishlist, name='wishlist'),
     path('accounts/wishlist/add/<int:product_id>/', add_to_wishlist, name='add_to_wishlist'),
     path('accounts/wishlist/remove/<int:item_id>/', remove_from_wishlist, name='remove_from_wishlist'),
+    path('accounts/wishlist/remove-ajax/<int:product_id>/', remove_from_wishlist_ajax, name='remove_from_wishlist_ajax'),
     path('accounts/wishlist/move-to-cart/<int:item_id>/', move_to_cart, name='move_to_cart'),
     path('promotions/', include('promotions.urls')),
 ]
