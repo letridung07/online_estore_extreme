@@ -41,20 +41,20 @@
                         <table class="table table-sm table-borderless">
                             <tbody>
                                 <tr>
-                                    <td>Subtotal (Items Total):</td>
+                                    <td>Subtotal <span class="small text-muted">(Items Total)</span>:</td>
                                     <td class="text-end">${{ order.subtotal|default:order.total_price }}</td>
                                 </tr>
                                 <tr>
-                                    <td>Shipping:</td>
+                                    <td>Shipping <span class="small text-muted">(Based on selected method)</span>:</td>
                                     <td class="text-end">${{ order.shipping_cost|default:"0.00" }}</td>
                                 </tr>
                                 <tr>
-                                    <td>Tax:</td>
+                                    <td>Tax <span class="small text-muted">(Applied based on location)</span>:</td>
                                     <td class="text-end">${{ order.tax|default:"0.00" }}</td>
                                 </tr>
                                 {% if order.discount_amount %}
                                     <tr class="text-success">
-                                        <td>Discount<span class="ms-1 small">{% if order.discount_code or request.session.discount_code %}(Promo Code: {{ order.discount_code|default:request.session.discount_code }}){% endif %}</span>:</td>
+                                        <td>Discount <span class="small text-muted">{% if order.discount_code or request.session.discount_code %}(Promo Code: {{ order.discount_code|default:request.session.discount_code }}){% endif %}</span>:</td>
                                         <td class="text-end">-${{ order.discount_amount|floatformat:2 }}</td>
                                     </tr>
                                 {% endif %}
@@ -70,6 +70,9 @@
                                             {% endif %}
                                         </strong>
                                     </td>
+                                </tr>
+                                <tr>
+                                    <td colspan="2" class="small text-muted text-center">Total includes all applicable fees and discounts. Prices are final as of order placement.</td>
                                 </tr>
                             </tbody>
                         </table>
