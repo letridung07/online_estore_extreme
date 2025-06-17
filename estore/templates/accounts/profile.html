@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1>My Account</h1>
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h2>Personal Information</h2>
+                </div>
+                <div class="card-body">
+                    <p><strong>Username:</strong> {{ user.username }}</p>
+                    <p><strong>Email:</strong> {{ user.email }}</p>
+                    <p><strong>Full Name:</strong> {{ user.get_full_name }}</p>
+                    <p><strong>Address:</strong> {{ profile.address|default:"Not provided" }}</p>
+                    <p><strong>Phone Number:</strong> {{ profile.phone_number|default:"Not provided" }}</p>
+                    <a href="{% url 'edit_profile' %}" class="btn btn-primary">Edit Information</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h2>Shipping Addresses</h2>
+                </div>
+                <div class="card-body">
+                    {% if shipping_addresses %}
+                        {% for address in shipping_addresses %}
+                            <div class="mb-3">
+                                <p><strong>Street:</strong> {{ address.street }}</p>
+                                <p><strong>City:</strong> {{ address.city }}</p>
+                                <p><strong>State:</strong> {{ address.state|default:"N/A" }}</p>
+                                <p><strong>ZIP Code:</strong> {{ address.zip_code }}</p>
+                                <p><strong>Country:</strong> {{ address.country }}</p>
+                                {% if address.is_default %}
+                                    <p><strong>Default Address</strong></p>
+                                {% else %}
+                                    <a href="#" class="btn btn-sm btn-outline-secondary">Set as Default</a>
+                                {% endif %}
+                                <a href="{% url 'edit_shipping_address' address_id=address.id %}" class="btn btn-sm btn-outline-primary">Edit</a>
+                                <a href="#" class="btn btn-sm btn-outline-danger">Delete</a>
+                            </div>
+                            <hr>
+                        {% endfor %}
+                    {% else %}
+                        <p>No shipping addresses saved.</p>
+                    {% endif %}
+                    <a href="{% url 'add_shipping_address' %}" class="btn btn-primary">Add New Address</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h2>Order History</h2>
+                </div>
+                <div class="card-body">
+                    {% if orders %}
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Order Number</th>
+                                    <th>Date</th>
+                                    <th>Total</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for order in orders %}
+                                    <tr>
+                                        <td>{{ order.id }}</td>
+                                        <td>{{ order.created_at|date:"Y-m-d" }}</td>
+                                        <td>{{ order.total_price }}</td>
+                                        <td>{{ order.status|default:"Pending" }}</td>
+                                        <td><a href="{% url 'order_confirmation' order_id=order.id %}" class="btn btn-sm btn-outline-primary">View Details</a></td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    {% else %}
+                        <p>No orders found.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h2>Account Settings</h2>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex gap-2">
+                        <a href="{% url 'password_change' %}" class="btn btn-outline-primary">Change Password</a>
+                        <a href="{% url 'email_preferences' %}" class="btn btn-outline-primary">Email Preferences</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
