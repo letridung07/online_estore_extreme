@@ -67,8 +67,11 @@
                             <p class="card-text">Tax: TBD</p>
                             {% if request.session.discount_code %}
                                 <p class="card-text text-success">Discount Applied: {{ request.session.discount_code }}</p>
+                                {% if discount_amount > 0 %}
+                                    <p class="card-text text-success">Discount: -${{ discount_amount|floatformat:2 }}</p>
+                                {% endif %}
                             {% endif %}
-                            <h4>Total: ${{ cart.total_price }}</h4>
+                            <h4>Total: ${{ discounted_total|floatformat:2 }}</h4>
                             <form method="POST" action="{% url 'promotions:apply_discount' %}" class="mb-3">
                                 {% csrf_token %}
                                 <div class="input-group">
