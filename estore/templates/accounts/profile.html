@@ -76,7 +76,7 @@
                                         <td>{{ order.created_at|date:"Y-m-d" }}</td>
                                         <td>{{ order.total_price }}</td>
                                         <td>{{ order.status|default:"Pending" }}</td>
-                                        <td><a href="#" class="btn btn-sm btn-outline-primary">View Details</a></td>
+                                        <td><a href="{% url 'order_confirmation' order_id=order.id %}" class="btn btn-sm btn-outline-primary">View Details</a></td>
                                     </tr>
                                 {% endfor %}
                             </tbody>
