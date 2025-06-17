@@ -22,3 +22,27 @@ def profile(request):
         'orders': orders,
     }
     return render(request, 'accounts/profile.html', context)
+
+from django.forms import ModelForm
+from .models import ShippingAddress
+
+class ShippingAddressForm(ModelForm):
+    class Meta:
+        model = ShippingAddress
+        fields = ['street', 'city', 'state', 'zip_code', 'country', 'is_default']
+
+@login_required
+def add_shipping_address(request):
+    if request.method == 'POST':
+        form = ShippingAddressForm(request.POST)
+        if form.is_valid():
+            address = form.save(commit=False)
+            address.user = request.user
+            # If this is set as default, unset any other default addresses
+            if address.is_default:
+                request.user.shipping_addresses.exclude(id=address.id).update(is_default=False)
+            address.save()
+            return redirect('profile')
+    else:
+        form = ShippingAddressForm()
+    return render(request, 'accounts/add_address.html', {'form': form})
