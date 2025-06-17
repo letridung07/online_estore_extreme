@@ -16,7 +16,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from accounts.views import profile, add_shipping_address
+from accounts.views import profile, add_shipping_address, edit_shipping_address
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -26,5 +26,6 @@ urlpatterns = [
     path('accounts/', include('django.contrib.auth.urls')),
     path('accounts/profile/', profile, name='profile'),
     path('accounts/profile/add-address/', add_shipping_address, name='add_shipping_address'),
+    path('accounts/profile/edit-address/<int:address_id>/', edit_shipping_address, name='edit_shipping_address'),
     path('promotions/', include('promotions.urls')),
 ]

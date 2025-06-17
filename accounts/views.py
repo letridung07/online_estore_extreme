@@ -46,3 +46,19 @@ def add_shipping_address(request):
     else:
         form = ShippingAddressForm()
     return render(request, 'accounts/add_address.html', {'form': form})
+
+@login_required
+def edit_shipping_address(request, address_id):
+    address = ShippingAddress.objects.get(id=address_id, user=request.user)
+    if request.method == 'POST':
+        form = ShippingAddressForm(request.POST, instance=address)
+        if form.is_valid():
+            updated_address = form.save(commit=False)
+            # If this is set as default, unset any other default addresses
+            if updated_address.is_default:
+                request.user.shipping_addresses.exclude(id=updated_address.id).update(is_default=False)
+            updated_address.save()
+            return redirect('profile')
+    else:
+        form = ShippingAddressForm(instance=address)
+    return render(request, 'accounts/add_address.html', {'form': form, 'editing': True, 'address_id': address_id})

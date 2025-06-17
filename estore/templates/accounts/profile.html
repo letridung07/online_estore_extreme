@@ -38,7 +38,7 @@
                                 {% else %}
                                     <a href="#" class="btn btn-sm btn-outline-secondary">Set as Default</a>
                                 {% endif %}
-                                <a href="#" class="btn btn-sm btn-outline-primary">Edit</a>
+                                <a href="{% url 'edit_shipping_address' address_id=address.id %}" class="btn btn-sm btn-outline-primary">Edit</a>
                                 <a href="#" class="btn btn-sm btn-outline-danger">Delete</a>
                             </div>
                             <hr>
