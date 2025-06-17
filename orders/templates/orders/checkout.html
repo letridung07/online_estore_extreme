@@ -126,6 +126,12 @@
                                 <span>Subtotal:</span>
                                 <span>${{ cart.total_price }}</span>
                             </div>
+                            {% if request.session.discount_code %}
+                                <div class="d-flex justify-content-between mb-2 text-success">
+                                    <span>Discount ({{ request.session.discount_code }}):</span>
+                                    <span>-${{ discount_amount|floatformat:2 }}</span>
+                                </div>
+                            {% endif %}
                             <div class="d-flex justify-content-between mb-2">
                                 <span>Shipping:</span>
                                 <span id="shippingCost">$5.00</span>
@@ -136,7 +142,7 @@
                             </div>
                             <div class="d-flex justify-content-between h5">
                                 <strong>Total:</strong>
-                                <strong id="totalCost">${{ cart.total_price|add:"5.00" }}</strong>
+                                <strong id="totalCost">${{ discounted_total|add:"5.00"|floatformat:2 }}</strong>
                             </div>
                         </div>
                     </div>
@@ -149,7 +155,7 @@
         {% endif %}
     </div>
     <script>
-        // Simple script to update total cost based on shipping method selection (placeholder)
+        // Script to update total cost based on shipping method selection
         document.getElementById('shippingMethod').addEventListener('change', function() {
             let shippingCost = 5.00;
             if (this.value === 'express') {
@@ -158,7 +164,7 @@
                 shippingCost = 20.00;
             }
             document.getElementById('shippingCost').textContent = '$' + shippingCost.toFixed(2);
-            const subtotal = parseFloat('{{ cart.total_price }}');
+            const subtotal = parseFloat('{{ discounted_total }}');
             const total = subtotal + shippingCost;
             document.getElementById('totalCost').textContent = '$' + total.toFixed(2);
         });

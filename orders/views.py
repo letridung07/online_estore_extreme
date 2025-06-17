@@ -12,6 +12,36 @@ def checkout(request):
         messages.error(request, "Your cart is empty. Add items to your cart before checking out.")
         return redirect('cart_detail')
     
+    discount_code = request.session.get('discount_code')
+    discount_amount = 0
+    discounted_total = cart.total_price
+    
+    if discount_code:
+        try:
+            from promotions.models import DiscountCode
+            discount = DiscountCode.objects.get(code=discount_code, is_active=True)
+            from django.utils import timezone
+            now = timezone.now()
+            if discount.start_date <= now <= discount.end_date and discount.times_used < discount.usage_limit:
+                if cart.total_price >= discount.minimum_purchase:
+                    if discount.discount_type == 'percentage':
+                        discount_amount = cart.total_price * (discount.discount_value / 100)
+                    else:  # fixed_amount
+                        discount_amount = min(discount.discount_value, cart.total_price)
+                    discounted_total = cart.total_price - discount_amount
+                else:
+                    messages.error(request, f"Minimum purchase of ${discount.minimum_purchase} required for discount code {discount_code}.")
+                    del request.session['discount_code']
+                    request.session.modified = True
+            else:
+                messages.error(request, f"Discount code {discount_code} is no longer valid.")
+                del request.session['discount_code']
+                request.session.modified = True
+        except DiscountCode.DoesNotExist:
+            messages.error(request, f"Discount code {discount_code} is invalid.")
+            del request.session['discount_code']
+            request.session.modified = True
+    
     if request.method == 'POST':
         full_name = request.POST.get('full_name')
         address = request.POST.get('address')
@@ -24,7 +54,7 @@ def checkout(request):
         
         order = Order.objects.create(
             user=request.user,
-            total_price=cart.total_price,
+            total_price=discounted_total,
             shipping_address=shipping_address,
             status='pending'
         )
@@ -37,12 +67,26 @@ def checkout(request):
                 price=item.product.price
             )
         
-        # Clear the cart after successful order creation
+        # Clear the cart and discount code after successful order creation
         cart.items.all().delete()
+        if discount_code:
+            try:
+                discount = DiscountCode.objects.get(code=discount_code, is_active=True)
+                discount.times_used += 1
+                discount.save()
+                del request.session['discount_code']
+                request.session.modified = True
+            except DiscountCode.DoesNotExist:
+                pass
+                
         messages.success(request, f"Your order #{order.id} has been placed successfully!")
         return redirect('order_confirmation', order_id=order.id)
     
-    return render(request, 'orders/checkout.html', {'cart': cart})
+    return render(request, 'orders/checkout.html', {
+        'cart': cart,
+        'discount_amount': discount_amount,
+        'discounted_total': discounted_total
+    })
 
 @login_required
 def order_confirmation(request, order_id):
