@@ -7,7 +7,7 @@
     <div class="container mt-4">
         <h1 class="mb-4">Checkout</h1>
         
-        {% if cart.items.all %}
+        {% if cart.items.exists() %}
             <div class="row">
                 <div class="col-lg-8">
                     <div class="accordion" id="checkoutAccordion">
@@ -73,23 +73,40 @@
                             </h2>
                             <div id="collapsePayment" class="accordion-collapse collapse" aria-labelledby="headingPayment" data-bs-parent="#checkoutAccordion">
                                 <div class="accordion-body">
-                                    <div class="mb-3">
-                                        <label for="cardNumber" class="form-label">Card Number</label>
-                                        <input type="text" class="form-control" id="cardNumber" name="card_number" placeholder="1234 5678 9012 3456" required>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col-md-6 mb-3">
-                                            <label for="expiryDate" class="form-label">Expiry Date</label>
-                                            <input type="text" class="form-control" id="expiryDate" name="expiry_date" placeholder="MM/YY" required>
+                                    {% if saved_payment_methods %}
+                                        <div class="mb-3">
+                                            <label class="form-label">Saved Payment Methods</label>
+                                            {% for method in saved_payment_methods %}
+                                                <div class="form-check">
+                                                    <input type="radio" class="form-check-input" id="savedMethod{{ method.id }}" name="payment_method" value="saved_{{ method.id }}" onchange="togglePaymentFields(false)">
+                                                    <label class="form-check-label" for="savedMethod{{ method.id }}">{{ method }}</label>
+                                                </div>
+                                            {% endfor %}
+                                            <div class="form-check">
+                                                <input type="radio" class="form-check-input" id="newCard" name="payment_method" value="new" onchange="togglePaymentFields(true)" checked>
+                                                <label class="form-check-label" for="newCard">Use a new card</label>
+                                            </div>
                                         </div>
-                                        <div class="col-md-6 mb-3">
-                                            <label for="cvv" class="form-label">CVV</label>
-                                            <input type="text" class="form-control" id="cvv" name="cvv" placeholder="123" required>
+                                    {% endif %}
+                                    <div id="newCardFields">
+                                        <div class="mb-3">
+                                            <label for="cardNumber" class="form-label">Card Number</label>
+                                            <input type="text" class="form-control" id="cardNumber" name="card_number" placeholder="1234 5678 9012 3456" required>
                                         </div>
-                                    </div>
-                                    <div class="form-check mb-3">
-                                        <input type="checkbox" class="form-check-input" id="saveCard" name="save_card">
-                                        <label class="form-check-label" for="saveCard">Save card for future purchases</label>
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3">
+                                                <label for="expiryDate" class="form-label">Expiry Date</label>
+                                                <input type="text" class="form-control" id="expiryDate" name="expiry_date" placeholder="MM/YY" required>
+                                            </div>
+                                            <div class="col-md-6 mb-3">
+                                                <label for="cvv" class="form-label">CVV</label>
+                                                <input type="text" class="form-control" id="cvv" name="cvv" placeholder="123" required>
+                                            </div>
+                                        </div>
+                                        <div class="form-check mb-3">
+                                            <input type="checkbox" class="form-check-input" id="saveCard" name="save_card">
+                                            <label class="form-check-label" for="saveCard">Save card for future purchases</label>
+                                        </div>
                                     </div>
                                     <div class="alert alert-info" role="alert">
                                         <small>Your payment information is securely processed. We do not store card details on our servers.</small>
@@ -126,6 +143,12 @@
                                 <span>Subtotal:</span>
                                 <span>${{ cart.total_price }}</span>
                             </div>
+                            {% if request.session.discount_code %}
+                                <div class="d-flex justify-content-between mb-2 text-success">
+                                    <span>Discount ({{ request.session.discount_code }}):</span>
+                                    <span>-${{ discount_amount|floatformat:2 }}</span>
+                                </div>
+                            {% endif %}
                             <div class="d-flex justify-content-between mb-2">
                                 <span>Shipping:</span>
                                 <span id="shippingCost">$5.00</span>
@@ -136,7 +159,7 @@
                             </div>
                             <div class="d-flex justify-content-between h5">
                                 <strong>Total:</strong>
-                                <strong id="totalCost">${{ cart.total_price|add:"5.00" }}</strong>
+                                <strong id="totalCost">${{ discounted_total|add:"5.00"|floatformat:2 }}</strong>
                             </div>
                         </div>
                     </div>
@@ -149,18 +172,39 @@
         {% endif %}
     </div>
     <script>
-        // Simple script to update total cost based on shipping method selection (placeholder)
-        document.getElementById('shippingMethod').addEventListener('change', function() {
-            let shippingCost = 5.00;
-            if (this.value === 'express') {
-                shippingCost = 10.00;
-            } else if (this.value === 'overnight') {
-                shippingCost = 20.00;
+        // Script to update total cost based on shipping method selection
+        document.addEventListener('DOMContentLoaded', function() {
+            const shippingMethod = document.getElementById('shippingMethod');
+            const shippingCostElement = document.getElementById('shippingCost');
+            const totalCostElement = document.getElementById('totalCost');
+            const subtotal = parseFloat('{{ discounted_total|floatformat:2 }}') || 0.00;
+
+            function updateTotalCost() {
+                let shippingCost = 5.00;
+                if (shippingMethod.value === 'express') {
+                    shippingCost = 10.00;
+                } else if (shippingMethod.value === 'overnight') {
+                    shippingCost = 20.00;
+                }
+                shippingCostElement.textContent = '$' + shippingCost.toFixed(2);
+                const total = subtotal + shippingCost;
+                totalCostElement.textContent = '$' + total.toFixed(2);
             }
-            document.getElementById('shippingCost').textContent = '$' + shippingCost.toFixed(2);
-            const subtotal = parseFloat('{{ cart.total_price }}');
-            const total = subtotal + shippingCost;
-            document.getElementById('totalCost').textContent = '$' + total.toFixed(2);
+
+            shippingMethod.addEventListener('change', updateTotalCost);
+            updateTotalCost(); // Initial call to set the total correctly on page load
+            
+            // Function to toggle payment fields visibility
+            window.togglePaymentFields = function(show) {
+                const newCardFields = document.getElementById('newCardFields');
+                if (newCardFields) {
+                    newCardFields.style.display = show ? 'block' : 'none';
+                    const inputs = newCardFields.querySelectorAll('input[type="text"]');
+                    inputs.forEach(input => {
+                        input.required = show;
+                    });
+                }
+            };
         });
     </script>
 {% endblock %}

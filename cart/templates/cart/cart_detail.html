@@ -20,7 +20,7 @@
     <div class="container mt-4">
         <h1 class="mb-4">Shopping Cart</h1>
         
-        {% if cart.items.all %}
+        {% if cart.items.exists() %}
             <div class="row">
                 <div class="col-lg-8">
                     <table class="table">
@@ -65,7 +65,22 @@
                             <p class="card-text">Subtotal: ${{ cart.total_price }}</p>
                             <p class="card-text">Shipping: TBD</p>
                             <p class="card-text">Tax: TBD</p>
-                            <h4>Total: ${{ cart.total_price }}</h4>
+                            {% if request.session.discount_code %}
+                                <p class="card-text text-success">Discount Applied: {{ request.session.discount_code }}
+                                    <a href="{% url 'promotions:remove_discount' %}" class="btn btn-sm btn-outline-danger ms-2" aria-label="Remove discount code">Remove</a>
+                                </p>
+                                {% if discount_amount > 0 %}
+                                    <p class="card-text text-success">Discount: -${{ discount_amount|floatformat:2 }}</p>
+                                {% endif %}
+                            {% endif %}
+                            <h4>Total: ${{ discounted_total|floatformat:2 }}</h4>
+                            <form method="POST" action="{% url 'promotions:apply_discount' %}" class="mb-3">
+                                {% csrf_token %}
+                                <div class="input-group">
+                                    <input type="text" name="discount_code" class="form-control" placeholder="Enter Discount Code">
+                                    <button type="submit" class="btn btn-outline-secondary">Apply</button>
+                                </div>
+                            </form>
                             <a href="{% url 'checkout' %}" class="btn btn-primary w-100">Proceed to Checkout</a>
                         </div>
                     </div>

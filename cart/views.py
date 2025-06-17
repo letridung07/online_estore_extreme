@@ -6,7 +6,19 @@ from django.contrib.auth.decorators import login_required
 
 def cart_detail(request):
     cart = get_cart(request)
-    return render(request, 'cart/cart_detail.html', {'cart': cart})
+    discount_code = request.session.get('discount_code')
+    discount_amount = 0
+    discounted_total = cart.total_price
+
+    if discount_code:
+        from orders.helpers import apply_discount
+        discount_amount, discounted_total = apply_discount(cart, request)
+
+    return render(request, 'cart/cart_detail.html', {
+        'cart': cart,
+        'discount_amount': discount_amount,
+        'discounted_total': discounted_total
+    })
 
 def add_to_cart(request, product_id):
     product = get_object_or_404(Product, id=product_id)
