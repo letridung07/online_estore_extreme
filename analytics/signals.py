@@ -117,19 +117,17 @@ def update_website_traffic(visitor_id='unknown', request=None):
     unique_visitors_key = f"website_traffic_unique_{today}"
     bounces_key = f"website_traffic_bounces_{today}"
     
-    # Initialize cache keys if they don't exist
+    # Initialize cache keys if they don't exist for total visits and bounces
     cache.add(total_visits_key, 0)
-    cache.add(unique_visitors_key, set())
     cache.add(bounces_key, 0)
     
-    # Increment total visits
+    # Increment total visits using atomic operation
     cache.incr(total_visits_key)
     
-    # Track unique visitors using a set in cache
-    unique_visitors = cache.get(unique_visitors_key)
-    if visitor_id not in unique_visitors:
-        unique_visitors.add(visitor_id)
-        cache.set(unique_visitors_key, unique_visitors)
+    # Track unique visitors using Redis atomic set operation
+    from django_redis import get_redis_connection
+    redis_conn = get_redis_connection("default")
+    redis_conn.sadd(unique_visitors_key, visitor_id)
     
     # Track bounce rate (single-page visits)
     if request:
@@ -138,17 +136,20 @@ def update_website_traffic(visitor_id='unknown', request=None):
         if session_key not in session:
             session[session_key] = [request.path_info]
             session.modified = True
+            # Assume potential bounce on first page visit
+            cache.incr(bounces_key)
         else:
             visited_pages = session[session_key]
             if len(visited_pages) == 1 and request.path_info not in visited_pages:
-                # Visitor navigated to a second page, not a bounce
+                # Visitor navigated to a second page, not a bounce, so decrement bounce count
                 visited_pages.append(request.path_info)
                 session[session_key] = visited_pages
                 session.modified = True
+                cache.decr(bounces_key)
             elif len(visited_pages) == 1:
-                # Still on first page, potential bounce (incremented on session timeout)
+                # Still on first page, potential bounce already counted
                 pass
-            # TODO: Implement bounce count increment for sessions that timeout without navigating to a second page.
+            # TODO: Implement bounce count adjustment for sessions that timeout without navigating to a second page.
             # This should be handled by a periodic task checking session data for inactivity (e.g., 30 minutes).
     
-    # Note: A periodic task should flush these cache values to the database
+    # Note: A periodic task should flush these cache values to the database, including using scard for unique visitors count
