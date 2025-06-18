@@ -71,6 +71,20 @@
                             <span class="wishlist-icon" style="display: none;">{% if product_in_wishlist %}{% else %}❤️{% endif %}</span>
                         </a>
                     {% endif %}
+                    <div class="mt-3">
+                        <h6>Share this product:</h6>
+                        <div class="social-share-buttons">
+                            <a href="https://www.facebook.com/sharer/sharer.php?u={{ request.build_absolute_uri }}" target="_blank" class="btn btn-sm btn-primary me-2" style="background-color: #3b5998; border-color: #3b5998;">
+                                <i class="fab fa-facebook-f"></i> Share
+                            </a>
+                            <a href="https://twitter.com/intent/tweet?url={{ request.build_absolute_uri }}&text=Check out {{ product.name }} on our eStore!" target="_blank" class="btn btn-sm btn-primary me-2" style="background-color: #1da1f2; border-color: #1da1f2;">
+                                <i class="fab fa-twitter"></i> Tweet
+                            </a>
+                            <a href="https://pinterest.com/pin/create/button/?url={{ request.build_absolute_uri }}&media={% if product.image %}{{ product.image.url }}{% else %}https://via.placeholder.com/150{% endif %}&description={{ product.name }}" target="_blank" class="btn btn-sm btn-primary" style="background-color: #bd081c; border-color: #bd081c;">
+                                <i class="fab fa-pinterest"></i> Pin
+                            </a>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
