@@ -10,14 +10,18 @@ from django.db.models.functions import TruncDay, TruncMonth
 from django.core.cache import cache
 from functools import wraps
 
-def cache_view(cache_key, timeout=300):
+def cache_view(cache_key, timeout=300, key_func=None):
     def decorator(view_func):
         @wraps(view_func)
         def wrapper(request, *args, **kwargs):
-            context = cache.get(cache_key)
+            final_cache_key = cache_key
+            if key_func:
+                dynamic_part = key_func(request, *args, **kwargs)
+                final_cache_key = f"{cache_key}:{dynamic_part}"
+            context = cache.get(final_cache_key)
             if context is None:
                 context = view_func(request, *args, **kwargs)
-                cache.set(cache_key, context, timeout)
+                cache.set(final_cache_key, context, timeout)
             return context
         return wrapper
     return decorator

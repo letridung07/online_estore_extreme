@@ -18,19 +18,9 @@ def update_sales_analytics(sender, instance, created, **kwargs):
         }
         if instance.discount_code:
             updates['discount_usage_count'] = F('discount_usage_count') + 1
-            try:
-                from promotions.models import DiscountCode
-                discount = DiscountCode.objects.get(code=instance.discount_code, is_active=True)
-                if discount.discount_type == 'fixed_amount':
-                    updates['discount_total_amount'] = F('discount_total_amount') + discount.discount_value
-                elif discount.discount_type == 'percentage':
-                    # Calculate pre-discount total by summing OrderItem total prices
-                    pre_discount_total = sum(item.total_price for item in instance.items.all())
-                    discount_amount = (pre_discount_total * discount.discount_value) / 100
-                    updates['discount_total_amount'] = F('discount_total_amount') + discount_amount
-            except DiscountCode.DoesNotExist:
-                # Discount code not found or inactive, skip updating discount_total_amount
-                pass
+            discount_amount = calculate_discount_amount(instance)
+            if discount_amount > 0:
+                updates['discount_total_amount'] = F('discount_total_amount') + discount_amount
         SalesAnalytics.objects.filter(date=today).update(**updates)
         # Recalculate average_order_value after updates
         SalesAnalytics.objects.filter(date=today).update(
@@ -84,6 +74,27 @@ def update_customer_analytics_on_signup(sender, instance, created, **kwargs):
 
 # Use Django cache for website traffic updates to reduce database load
 from django.core.cache import cache
+
+
+def calculate_discount_amount(order):
+    """
+    Calculate the discount amount for an order based on the discount code.
+    Returns the discount amount if applicable, otherwise 0.
+    """
+    if not order.discount_code:
+        return 0
+    try:
+        from promotions.models import DiscountCode
+        discount = DiscountCode.objects.get(code=order.discount_code, is_active=True)
+        if discount.discount_type == 'fixed_amount':
+            return discount.discount_value
+        elif discount.discount_type == 'percentage':
+            pre_discount_total = sum(item.total_price for item in order.items.all())
+            return (pre_discount_total * discount.discount_value) / 100
+    except DiscountCode.DoesNotExist:
+        return 0
+    return 0
+
 
 def update_website_traffic():
     today = timezone.now().date()
