@@ -5,8 +5,13 @@ class WebsiteTrafficMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
-        # Update website traffic metrics for each request
-        update_website_traffic()
+        # Update website traffic metrics only for relevant requests (non-static resources)
+        path = request.path_info.lower()
+        static_extensions = {'.css', '.js', '.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico', '.woff', '.woff2', '.ttf', '.eot', '.otf'}
+        is_static = path.startswith('/static/') or any(path.endswith(ext) for ext in static_extensions)
+        
+        if not is_static:
+            update_website_traffic()
         
         # Continue processing the request
         response = self.get_response(request)

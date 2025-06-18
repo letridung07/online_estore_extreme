@@ -22,10 +22,10 @@ def update_sales_analytics(sender, instance, created, **kwargs):
                 if discount.discount_type == 'fixed_amount':
                     sales_analytics.discount_total_amount += discount.discount_value
                 elif discount.discount_type == 'percentage':
-                    # TODO: Calculate discount amount for percentage type
-                    # Currently, pre-discount total is not available in Order model
-                    # This needs additional logic to compute the actual discount amount
-                    pass
+                    # Calculate pre-discount total by summing OrderItem total prices
+                    pre_discount_total = sum(item.total_price for item in instance.items.all())
+                    discount_amount = (pre_discount_total * discount.discount_value) / 100
+                    sales_analytics.discount_total_amount += discount_amount
             except DiscountCode.DoesNotExist:
                 # Discount code not found or inactive, skip updating discount_total_amount
                 pass
