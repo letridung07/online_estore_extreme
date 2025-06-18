@@ -1,213 +1,190 @@
 {% extends 'base.html' %}
-{% load static %}
-
-{% block title %}Checkout - Online eStore{% endblock %}
 
 {% block content %}
-    <div class="container mt-4">
-        <h1 class="mb-4">Checkout</h1>
-        
-        {% if cart.items %}
-            <div class="row">
-                <div class="col-lg-8">
-                    <div class="accordion" id="checkoutAccordion">
-                        <div class="accordion-item">
-                            <h2 class="accordion-header" id="headingShipping">
-                                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseShipping" aria-expanded="true" aria-controls="collapseShipping">
-                                    <span class="h5 mb-0">1. Shipping Information</span>
-                                </button>
-                            </h2>
-                            <div id="collapseShipping" class="accordion-collapse collapse show" aria-labelledby="headingShipping" data-bs-parent="#checkoutAccordion">
-                                <div class="accordion-body">
-                                    <form method="POST" action="{% url 'checkout' %}">
-                                        {% csrf_token %}
-                                        <div class="mb-3">
-                                            <label for="fullName" class="form-label">Full Name</label>
-                                            <input type="text" class="form-control" id="fullName" name="full_name" required>
-                                        </div>
-                                        <div class="mb-3">
-                                            <label for="address" class="form-label">Address</label>
-                                            <textarea class="form-control" id="address" name="address" rows="3" required></textarea>
-                                        </div>
-                                        <div class="row">
-                                            <div class="col-md-6 mb-3">
-                                                <label for="city" class="form-label">City</label>
-                                                <input type="text" class="form-control" id="city" name="city" required>
-                                            </div>
-                                            <div class="col-md-6 mb-3">
-                                                <label for="postalCode" class="form-label">Postal Code</label>
-                                                <input type="text" class="form-control" id="postalCode" name="postal_code" required>
-                                            </div>
-                                        </div>
-                                        <div class="mb-3">
-                                            <label for="country" class="form-label">Country</label>
-                                            <input type="text" class="form-control" id="country" name="country" required>
-                                        </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="accordion-item">
-                            <h2 class="accordion-header" id="headingShippingMethod">
-                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseShippingMethod" aria-expanded="false" aria-controls="collapseShippingMethod">
-                                    <span class="h5 mb-0">2. Shipping Method</span>
-                                </button>
-                            </h2>
-                            <div id="collapseShippingMethod" class="accordion-collapse collapse" aria-labelledby="headingShippingMethod" data-bs-parent="#checkoutAccordion">
-                                <div class="accordion-body">
-                                    <div class="mb-3">
-                                        <label for="shippingMethod" class="form-label">Select Shipping Method</label>
-                                        <select class="form-select" id="shippingMethod" name="shipping_method">
-                                            <option value="standard" selected>Standard Shipping (5-7 days) - $5.00</option>
-                                            <option value="express">Express Shipping (2-3 days) - $10.00</option>
-                                            <option value="overnight">Overnight Shipping (1 day) - $20.00</option>
-                                        </select>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="accordion-item">
-                            <h2 class="accordion-header" id="headingPayment">
-                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePayment" aria-expanded="false" aria-controls="collapsePayment">
-                                    <span class="h5 mb-0">3. Payment Information</span>
-                                </button>
-                            </h2>
-                            <div id="collapsePayment" class="accordion-collapse collapse" aria-labelledby="headingPayment" data-bs-parent="#checkoutAccordion">
-                                <div class="accordion-body">
-                                    {% if saved_payment_methods %}
-                                        <div class="mb-3">
-                                            <label class="form-label">Saved Payment Methods</label>
-                                            {% for method in saved_payment_methods %}
-                                                <div class="form-check">
-                                                    <input type="radio" class="form-check-input" id="savedMethod{{ method.id }}" name="payment_method" value="saved_{{ method.id }}" onchange="togglePaymentFields(false)">
-                                                    <label class="form-check-label" for="savedMethod{{ method.id }}">{{ method }}</label>
-                                                </div>
-                                            {% endfor %}
-                                            <div class="form-check">
-                                                <input type="radio" class="form-check-input" id="newCard" name="payment_method" value="new" onchange="togglePaymentFields(true)" checked>
-                                                <label class="form-check-label" for="newCard">Use a new card</label>
-                                            </div>
-                                        </div>
-                                    {% endif %}
-                                    <div id="newCardFields">
-                                        <div class="mb-3">
-                                            <label for="cardNumber" class="form-label">Card Number</label>
-                                            <input type="text" class="form-control" id="cardNumber" name="card_number" placeholder="1234 5678 9012 3456" required>
-                                        </div>
-                                        <div class="row">
-                                            <div class="col-md-6 mb-3">
-                                                <label for="expiryDate" class="form-label">Expiry Date</label>
-                                                <input type="text" class="form-control" id="expiryDate" name="expiry_date" placeholder="MM/YY" required>
-                                            </div>
-                                            <div class="col-md-6 mb-3">
-                                                <label for="cvv" class="form-label">CVV</label>
-                                                <input type="text" class="form-control" id="cvv" name="cvv" placeholder="123" required>
-                                            </div>
-                                        </div>
-                                        <div class="form-check mb-3">
-                                            <input type="checkbox" class="form-check-input" id="saveCard" name="save_card">
-                                            <label class="form-check-label" for="saveCard">Save card for future purchases</label>
-                                        </div>
-                                    </div>
-                                    <div class="alert alert-info" role="alert">
-                                        <small>Your payment information is securely processed. We do not store card details on our servers.</small>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="mt-4 d-flex justify-content-between">
-                        <a href="{% url 'cart_detail' %}" class="btn btn-outline-secondary">Back to Cart</a>
-                        <button type="submit" class="btn btn-primary btn-lg">Place Order</button>
-                    </div>
-                    </form>
-                    <div class="mt-3 text-center text-muted">
-                        <small>By placing your order, you agree to our <a href="#" class="text-muted">Terms of Service</a> and <a href="#" class="text-muted">Privacy Policy</a>.</small>
-                    </div>
-                    <div class="mt-2 text-center">
-                        <img src="https://via.placeholder.com/300x50?text=Secure+Payment+Badges" alt="Secure Payment Badges" class="img-fluid" style="max-width: 200px;">
-                    </div>
-                </div>
-                <div class="col-lg-4">
-                    <div class="card sticky-top" style="top: 20px;">
-                        <div class="card-body">
-                            <h5 class="card-title">Order Summary</h5>
-                            <ul class="list-group list-group-flush mb-3">
-                                {% for item in cart.items.all %}
-                                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                                        {{ item.product.name }} (x{{ item.quantity }})
-                                        {% if item.variant %}
-                                            <br><small>Variant: {{ item.variant.name }}</small>
-                                        {% endif %}
-                                        <span>${{ item.total_price }}</span>
-                                    </li>
-                                {% endfor %}
-                            </ul>
-                            <div class="d-flex justify-content-between mb-2">
-                                <span>Subtotal:</span>
-                                <span>${{ cart.total_price }}</span>
-                            </div>
-                            {% if request.session.discount_code %}
-                                <div class="d-flex justify-content-between mb-2 text-success">
-                                    <span>Discount ({{ request.session.discount_code }}):</span>
-                                    <span>-${{ discount_amount|floatformat:2 }}</span>
-                                </div>
-                            {% endif %}
-                            <div class="d-flex justify-content-between mb-2">
-                                <span>Shipping:</span>
-                                <span id="shippingCost">$5.00</span>
-                            </div>
-                            <div class="d-flex justify-content-between mb-2">
-                                <span>Tax:</span>
-                                <span>$0.00</span>
-                            </div>
-                            <div class="d-flex justify-content-between h5">
-                                <strong>Total:</strong>
-                                <strong id="totalCost">${{ discounted_total|add:"5.00"|floatformat:2 }}</strong>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        {% else %}
-            <div class="alert alert-info" role="alert">
-                Your cart is empty. <a href="{% url 'product_list' %}" class="alert-link">Continue shopping</a>.
-            </div>
-        {% endif %}
-    </div>
-    <script>
-        // Script to update total cost based on shipping method selection
-        document.addEventListener('DOMContentLoaded', function() {
-            const shippingMethod = document.getElementById('shippingMethod');
-            const shippingCostElement = document.getElementById('shippingCost');
-            const totalCostElement = document.getElementById('totalCost');
-            const subtotal = parseFloat('{{ discounted_total|floatformat:2 }}') || 0.00;
+<div class="container mt-5">
+    <h1>Checkout</h1>
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
 
-            function updateTotalCost() {
-                let shippingCost = 5.00;
-                if (shippingMethod.value === 'express') {
-                    shippingCost = 10.00;
-                } else if (shippingMethod.value === 'overnight') {
-                    shippingCost = 20.00;
+    {% if payment_processing %}
+        <div id="payment-confirmation">
+            <h2>Confirm Your Payment</h2>
+            <div id="card-element" class="form-control"></div>
+            <div id="card-errors" role="alert" class="text-danger"></div>
+            <button id="confirm-payment" class="btn btn-primary mt-3">Confirm Payment</button>
+            <div id="payment-status" class="mt-3"></div>
+        </div>
+        <script src="https://js.stripe.com/v3/"></script>
+        <script>
+            var stripe = Stripe('{{ stripe_public_key }}');
+            var elements = stripe.elements();
+            var card = elements.create('card', {
+                style: {
+                    base: {
+                        color: '#32325d',
+                        fontFamily: '"Helvetica Neue", Helvetica, sans-serif',
+                        fontSmoothing: 'antialiased',
+                        fontSize: '16px',
+                        '::placeholder': {
+                            color: '#aab7c4'
+                        }
+                    },
+                    invalid: {
+                        color: '#fa755a',
+                        iconColor: '#fa755a'
+                    }
                 }
-                shippingCostElement.textContent = '$' + shippingCost.toFixed(2);
-                const total = subtotal + shippingCost;
-                totalCostElement.textContent = '$' + total.toFixed(2);
-            }
+            });
+            card.mount('#card-element');
 
-            shippingMethod.addEventListener('change', updateTotalCost);
-            updateTotalCost(); // Initial call to set the total correctly on page load
-            
-            // Function to toggle payment fields visibility
-            window.togglePaymentFields = function(show) {
-                const newCardFields = document.getElementById('newCardFields');
-                if (newCardFields) {
-                    newCardFields.style.display = show ? 'block' : 'none';
-                    const inputs = newCardFields.querySelectorAll('input[type="text"]');
-                    inputs.forEach(input => {
-                        input.required = show;
+            card.on('change', function(event) {
+                var displayError = document.getElementById('card-errors');
+                if (event.error) {
+                    displayError.textContent = event.error.message;
+                } else {
+                    displayError.textContent = '';
+                }
+            });
+
+            var confirmButton = document.getElementById('confirm-payment');
+            confirmButton.addEventListener('click', function(event) {
+                event.preventDefault();
+                confirmButton.disabled = true;
+                stripe.confirmCardPayment('{{ client_secret }}', {
+                    payment_method: {
+                        card: card,
+                        billing_details: {
+                            email: '{{ request.user.email }}'
+                        }
+                    }
+                }).then(function(result) {
+                    if (result.error) {
+                        var errorElement = document.getElementById('card-errors');
+                        errorElement.textContent = result.error.message;
+                        confirmButton.disabled = false;
+                    } else {
+                        if (result.paymentIntent.status === 'succeeded') {
+                            var paymentStatus = document.getElementById('payment-status');
+                            paymentStatus.innerHTML = '<div class="alert alert-success">Payment successful! Your order is confirmed.</div>';
+                            window.location.href = '/orders/confirmation/{{ order_id }}/';
+                        }
+                    }
+                });
+            });
+        </script>
+    {% else %}
+        <div class="row">
+            <div class="col-md-6">
+                <h2>Order Summary</h2>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th>Quantity</th>
+                            <th>Price</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in cart.items.all %}
+                            <tr>
+                                <td>{{ item.product.name }}{% if item.variant %} - {{ item.variant.name }}{% endif %}</td>
+                                <td>{{ item.quantity }}</td>
+                                <td>${{ item.product.price }}{% if item.variant %} + ${{ item.variant.price_adjustment }}{% endif %}</td>
+                                <td>${{ item.total_price }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="3"><strong>Subtotal:</strong></td>
+                            <td>${{ cart.total_price }}</td>
+                        </tr>
+                        {% if discount_amount > 0 %}
+                            <tr>
+                                <td colspan="3"><strong>Discount:</strong></td>
+                                <td>-${{ discount_amount }}</td>
+                            </tr>
+                            <tr>
+                                <td colspan="3"><strong>Total after Discount:</strong></td>
+                                <td>${{ discounted_total }}</td>
+                            </tr>
+                        {% endif %}
+                    </tfoot>
+                </table>
+            </div>
+            <div class="col-md-6">
+                <h2>Shipping Information</h2>
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label for="full_name">Full Name</label>
+                        <input type="text" class="form-control" id="full_name" name="full_name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="address">Address</label>
+                        <input type="text" class="form-control" id="address" name="address" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="city">City</label>
+                        <input type="text" class="form-control" id="city" name="city" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="postal_code">Postal Code</label>
+                        <input type="text" class="form-control" id="postal_code" name="postal_code" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="country">Country</label>
+                        <input type="text" class="form-control" id="country" name="country" required>
+                    </div>
+                    <h2>Payment Information</h2>
+                    <div class="form-group">
+                        <div id="card-element" class="form-control"></div>
+                        <div id="card-errors" role="alert" class="text-danger"></div>
+                    </div>
+                    <div class="form-check">
+                        <input type="checkbox" class="form-check-input" id="save_card" name="save_card">
+                        <label class="form-check-label" for="save_card">Save this card for future purchases</label>
+                    </div>
+                    <button type="submit" class="btn btn-primary mt-3">Place Order</button>
+                </form>
+                <script src="https://js.stripe.com/v3/"></script>
+                <script>
+                    var stripe = Stripe('{{ stripe_public_key }}');
+                    var elements = stripe.elements();
+                    var card = elements.create('card', {
+                        style: {
+                            base: {
+                                color: '#32325d',
+                                fontFamily: '"Helvetica Neue", Helvetica, sans-serif',
+                                fontSmoothing: 'antialiased',
+                                fontSize: '16px',
+                                '::placeholder': {
+                                    color: '#aab7c4'
+                                }
+                            },
+                            invalid: {
+                                color: '#fa755a',
+                                iconColor: '#fa755a'
+                            }
+                        }
                     });
-                }
-            };
-        });
-    </script>
+                    card.mount('#card-element');
+
+                    card.on('change', function(event) {
+                        var displayError = document.getElementById('card-errors');
+                        if (event.error) {
+                            displayError.textContent = event.error.message;
+                        } else {
+                            displayError.textContent = '';
+                        }
+                    });
+                </script>
+            </div>
+        </div>
+    {% endif %}
+</div>
 {% endblock %}
