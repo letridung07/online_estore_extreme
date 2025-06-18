@@ -46,7 +46,7 @@ def is_admin(user):
 
 @login_required
 @user_passes_test(is_admin)
-@cache_view('analytics_overview_data', timeout=300)
+@cache_view('analytics_overview_data', timeout=300, key_func=lambda request, *args, **kwargs: f"user_{request.user.id}")
 def dashboard_overview(request):
     # Sales Summary
     last_30_days = timezone.now() - timedelta(days=30)
@@ -78,7 +78,7 @@ def dashboard_overview(request):
 
 @login_required
 @user_passes_test(is_admin)
-@cache_view('analytics_sales_report_data', timeout=300)
+@cache_view('analytics_sales_report_data', timeout=300, key_func=lambda request, *args, **kwargs: f"user_{request.user.id}")
 def sales_report(request):
     last_365_days = timezone.now() - timedelta(days=365)
     sales_data_daily = SalesAnalytics.objects.filter(date__gte=last_365_days).order_by('date')
@@ -135,7 +135,7 @@ def product_performance(request):
 
 @login_required
 @user_passes_test(is_admin)
-@cache_view('analytics_marketing_data', timeout=300)
+@cache_view('analytics_marketing_data', timeout=300, key_func=lambda request, *args, **kwargs: f"user_{request.user.id}")
 def marketing_analysis(request):
     last_90_days = timezone.now() - timedelta(days=90)
     marketing_data = MarketingAnalytics.objects.filter(date__gte=last_90_days).order_by('date')
