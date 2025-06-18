@@ -25,10 +25,7 @@ def update_sales_analytics(sender, instance, created, **kwargs):
         with transaction.atomic():
             # Combine all updates into a single operation to reduce database queries
             from django.db.models import Case, When, Value, FloatField, Func, DecimalField
-            updates['average_order_value'] = Case(
-                When(total_orders__gt=0, then=Func(F('total_revenue') / F('total_orders'), function='ROUND', template='%(function)s(%(expressions)s, 2)', output_field=DecimalField(decimal_places=2, max_digits=10))),
-                default=Value(0.0, output_field=DecimalField(decimal_places=2, max_digits=10))
-            )
+            updates['average_order_value'] = calculate_average_order_value(F('total_revenue'), F('total_orders'))
             SalesAnalytics.objects.filter(date=today).update(**updates)
 
 @receiver(post_save, sender=Order)
@@ -71,6 +68,17 @@ def update_customer_analytics_on_signup(sender, instance, created, **kwargs):
                 new_customers=F('new_customers') + 1
             )
             update_customer_metrics(today)
+
+def calculate_average_order_value(total_revenue, total_orders):
+    """
+    Calculate the average order value given total revenue and total orders.
+    Returns the average order value rounded to 2 decimal places, or 0.0 if no orders exist.
+    """
+    from django.db.models import Case, When, Value, DecimalField, Func
+    return Case(
+        When(total_orders__gt=0, then=Func(total_revenue / total_orders, function='ROUND', template='%(function)s(%(expressions)s, 2)', output_field=DecimalField(decimal_places=2, max_digits=10))),
+        default=Value(0.0, output_field=DecimalField(decimal_places=2, max_digits=10))
+    )
 
 def update_customer_metrics(date):
     """

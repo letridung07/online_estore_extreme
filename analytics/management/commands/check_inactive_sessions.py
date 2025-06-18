@@ -36,18 +36,41 @@ class Command(BaseCommand):
 
                         # Check if only one page was visited
                         if isinstance(value, list) and len(value) == 1:
-                            # Check if the session has been inactive (using last modification or creation as proxy)
-                            # Since Django doesn't store last access time by default, we might need a custom way to track this
-                            # For now, assume session creation or last update as the activity time (limitation)
-                            if session.expire_date < inactivity_threshold:
-                                bounces_key = f"website_traffic_bounces_{date}"
-                                cache.incr(bounces_key)
-                                bounces_adjusted += 1
-                                # Mark session as processed by clearing or updating the visited_pages data
-                                session_data[key] = value + ["processed_bounce"]
-                                session.session_data = Session.objects.encode(session_data)
-                                session.save()
-                                sessions_processed += 1
+                            # Check if the session has been inactive using the last_activity timestamp
+                            last_activity_str = session_data.get('last_activity')
+                            if last_activity_str:
+                                try:
+                                    last_activity = timezone.datetime.fromisoformat(last_activity_str)
+                                    if last_activity < inactivity_threshold:
+                                        bounces_key = f"website_traffic_bounces_{date}"
+                                        cache.incr(bounces_key)
+                                        bounces_adjusted += 1
+                                        # Mark session as processed by updating the visited_pages data
+                                        session_data[key] = value + ["processed_bounce"]
+                                        session.session_data = Session.objects.encode(session_data)
+                                        session.save()
+                                        sessions_processed += 1
+                                except ValueError:
+                                    self.stderr.write(f"Invalid last_activity format for session {session.session_key}")
+                                    # Fallback to expire_date for older sessions or format errors
+                                    if session.expire_date < inactivity_threshold:
+                                        bounces_key = f"website_traffic_bounces_{date}"
+                                        cache.incr(bounces_key)
+                                        bounces_adjusted += 1
+                                        session_data[key] = value + ["processed_bounce"]
+                                        session.session_data = Session.objects.encode(session_data)
+                                        session.save()
+                                        sessions_processed += 1
+                            else:
+                                # Fallback for sessions without last_activity timestamp
+                                if session.expire_date < inactivity_threshold:
+                                    bounces_key = f"website_traffic_bounces_{date}"
+                                    cache.incr(bounces_key)
+                                    bounces_adjusted += 1
+                                    session_data[key] = value + ["processed_bounce"]
+                                    session.session_data = Session.objects.encode(session_data)
+                                    session.save()
+                                    sessions_processed += 1
             except Exception as e:
                 self.stderr.write(f"Error processing session {session.session_key}: {str(e)}")
 
