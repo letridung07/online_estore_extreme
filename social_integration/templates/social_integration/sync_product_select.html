@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+
+{% block title %}Sync New Product{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1>Sync New Product</h1>
+    <p>Select a product and a social media platform to initiate syncing.</p>
+    
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+    
+    <form method="post">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label for="product_id" class="form-label">Select Product</label>
+            <select class="form-select" id="product_id" name="product_id" required>
+                <option value="">-- Select a Product --</option>
+                {% for product in products %}
+                    <option value="{{ product.pk }}">{{ product.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="mb-3">
+            <label for="platform_id" class="form-label">Select Platform</label>
+            <select class="form-select" id="platform_id" name="platform_id" required>
+                <option value="">-- Select a Platform --</option>
+                {% for platform in platforms %}
+                    <option value="{{ platform.pk }}">{{ platform.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary">Initiate Sync</button>
+        <a href="{% url 'social_integration:product_sync_list' %}" class="btn btn-secondary">Cancel</a>
+    </form>
+    
+    {% if not products or not platforms %}
+        <div class="alert alert-warning mt-3" role="alert">
+            {% if not products %}
+                No products available to sync. Please add products first.
+            {% elif not platforms %}
+                No active social media platforms available. Please add and activate a platform first.
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
+
+<script>
+    // Basic client-side validation for the form
+    document.querySelector('form').addEventListener('submit', function(e) {
+        const productField = document.getElementById('product_id');
+        const platformField = document.getElementById('platform_id');
+        if (!productField.value || !platformField.value) {
+            e.preventDefault();
+            alert('Please select both a product and a platform.');
+            if (!productField.value) {
+                productField.focus();
+            } else {
+                platformField.focus();
+            }
+        }
+    });
+</script>
+{% endblock %}

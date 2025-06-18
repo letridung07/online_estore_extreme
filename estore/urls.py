@@ -24,6 +24,7 @@ urlpatterns = [
     path('cart/', include('cart.urls')),
     path('orders/', include('orders.urls')),
     path('accounts/', include('django.contrib.auth.urls')),
+    path('accounts/', include('allauth.urls')),  # Include allauth URLs for social authentication
     path('accounts/profile/', profile, name='profile'),
     path('accounts/profile/add-address/', add_shipping_address, name='add_shipping_address'),
     path('accounts/profile/edit-address/<int:address_id>/', edit_shipping_address, name='edit_shipping_address'),
@@ -37,4 +38,5 @@ urlpatterns = [
     path('accounts/wishlist/move-to-cart/<int:item_id>/', move_to_cart, name='move_to_cart'),
     path('promotions/', include('promotions.urls')),
     path('analytics/', include('analytics.urls')),
+    path('social-integration/', include('social_integration.urls')),
 ]

@@ -26,6 +26,20 @@
             <p class="mt-3">
                 <a href="{% url 'password_reset' %}">Forgot password?</a>
             </p>
+            <div class="mt-4">
+                <h4>Or login with:</h4>
+                <div class="social-login-buttons">
+                    <a href="{% url 'socialaccount_login' 'facebook' %}" class="btn btn-primary btn-social mt-2" style="background-color: #3b5998; border-color: #3b5998;" aria-label="Login with Facebook">
+                        <i class="fab fa-facebook-f" aria-hidden="true"></i> Facebook
+                    </a>
+                    <a href="{% url 'socialaccount_login' 'google' %}" class="btn btn-primary btn-social mt-2" style="background-color: #db4437; border-color: #db4437;">
+                        <i class="fab fa-google"></i> Google
+                    </a>
+                    <a href="{% url 'socialaccount_login' 'instagram' %}" class="btn btn-primary btn-social mt-2" style="background-color: #e1306c; border-color: #e1306c;">
+                        <i class="fab fa-instagram"></i> Instagram
+                    </a>
+                </div>
+            </div>
         </div>
     </div>
 </div>

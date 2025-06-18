@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+
+{% block title %}Add Social Platform{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1>Add New Social Platform</h1>
+    <p>Add a new social media platform integration for product syncing.</p>
+    
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+    
+    <form method="post">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label for="name" class="form-label">Platform Name</label>
+            <input type="text" class="form-control" id="name" name="name" required placeholder="e.g., Facebook, Instagram">
+        </div>
+        <div class="mb-3">
+            <label for="api_key" class="form-label">API Key</label>
+            <input type="text" class="form-control" id="api_key" name="api_key" placeholder="Enter API Key (optional)">
+        </div>
+        <div class="mb-3">
+            <label for="api_secret" class="form-label">API Secret</label>
+            <input type="password" class="form-control" id="api_secret" name="api_secret" placeholder="Enter API Secret (optional)">
+        </div>
+        <div class="mb-3 form-check">
+            <input type="checkbox" class="form-check-input" id="is_active" name="is_active">
+            <label class="form-check-label" for="is_active">Active Integration</label>
+        </div>
+        <button type="submit" class="btn btn-primary">Add Platform</button>
+        <a href="{% url 'social_integration:social_platform_list' %}" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+
+<script>
+    // Basic client-side validation for the form
+    document.querySelector('form').addEventListener('submit', function(e) {
+        const nameField = document.getElementById('name');
+        if (!nameField.value.trim()) {
+            e.preventDefault();
+            alert('Please enter a platform name.');
+            nameField.focus();
+        }
+    });
+</script>
+{% endblock %}

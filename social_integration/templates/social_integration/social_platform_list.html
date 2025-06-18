@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+
+{% block title %}Social Platforms{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1>Social Media Platforms</h1>
+    <p>Manage integrations with social media platforms for product syncing.</p>
+    
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+    
+    {% if platforms %}
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th scope="col">Name</th>
+                    <th scope="col">Active</th>
+                    <th scope="col">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for platform in platforms %}
+                    <tr>
+                        <td>{{ platform.name }}</td>
+                        <td>
+                            {% if platform.is_active %}
+                                <span class="badge bg-success">Active</span>
+                            {% else %}
+                                <span class="badge bg-danger">Inactive</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'social_integration:social_platform_update' pk=platform.pk %}" class="btn btn-sm btn-primary">Edit</a>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <div class="alert alert-info" role="alert">
+            No social media platforms are currently integrated. Add a platform to get started.
+        </div>
+    {% endif %}
+    
+    <a href="{% url 'social_integration:social_platform_create' %}" class="btn btn-success">Add New Platform</a>
+</div>
+{% endblock %}
