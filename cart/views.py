@@ -80,7 +80,8 @@ def update_cart_item(request, item_id):
                 cart_item.save()
                 messages.success(request, f"Updated quantity of {cart_item.product.name}.")
             else:
-                messages.error(request, f"Invalid quantity. Must be between 1 and {stock} for {stock_source}.")
+                name = cart_item.variant.name if cart_item.variant else cart_item.product.name
+                messages.error(request, f"Invalid quantity. Must be between 1 and {stock} for {name}.")
         except (ValueError, TypeError):
             messages.error(request, "Invalid quantity. Please enter a valid number.")
     return redirect('cart_detail')
