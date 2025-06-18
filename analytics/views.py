@@ -7,7 +7,6 @@ from products.models import Product, ProductView
 from orders.models import Order, OrderItem
 from django.db.models.functions import TruncDay, TruncMonth
 from django.db.models import Avg
-from django.db.models.functions import Coalesce
 from django.core.cache import cache
 
 ORDER_STATUSES = ['processing', 'shipped', 'delivered']
@@ -51,7 +50,6 @@ def dashboard(request):
         total_views = ProductView.objects.count()
         cache.set('total_views_count', total_views, 300)  # cache for 5 minutes
 
-    total_reviews = Product.objects.filter(reviews__isnull=False).count()
     total_reviews = Product.objects.filter(reviews__isnull=False).count()
 
     # Inventory Overview
