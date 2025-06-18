@@ -202,7 +202,7 @@
         {% for item in sales_data %}
         {"date": "{{ item.date }}", "total_revenue": {{ item.total_revenue|default:0 }}},
         {% empty %}
-        {"date": "No data", "revenue": 0},
+        {"date": "No data", "total_revenue": 0},
         {% endfor %}
     ]
 </script>

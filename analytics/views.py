@@ -56,10 +56,10 @@ def dashboard_overview(request):
 def sales_report(request):
     last_365_days = timezone.now() - timedelta(days=365)
     sales_data_daily = SalesAnalytics.objects.filter(date__gte=last_365_days).order_by('date')
-    sales_data_monthly = Order.objects.filter(status__in=ORDER_STATUSES)\
-        .annotate(month=TruncMonth('created_at'))\
+    sales_data_monthly = SalesAnalytics.objects.filter(date__gte=last_365_days)\
+        .annotate(month=TruncMonth('date'))\
         .values('month')\
-        .annotate(total=Sum('total_price'), count=Count('id'))\
+        .annotate(total=Sum('total_revenue'), count=Sum('total_orders'))\
         .order_by('month')[:12]
     
     context = {
