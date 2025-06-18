@@ -63,21 +63,7 @@ def checkout(request):
             order.payment_intent_id = payment_intent.id
             order.save()
             
-            # Clear the cart and discount code after successful order creation
-            cart.items.all().delete()
-            if discount_code:
-                try:
-                    discount = DiscountCode.objects.get(code=discount_code, is_active=True)
-                    from django.db.models import F
-                    from django.db import transaction
-                    with transaction.atomic():
-                        discount.times_used = F('times_used') + 1
-                        discount.save(update_fields=['times_used'])
-                        discount.refresh_from_db(fields=['times_used'])
-                    del request.session['discount_code']
-                    request.session.modified = True
-                except DiscountCode.DoesNotExist:
-                    pass
+            # Cart clearing and discount code handling is now done in payments/views.py webhook after payment confirmation
                     
             # Handle saving card information if requested
             save_card = request.POST.get('save_card')

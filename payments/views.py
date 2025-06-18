@@ -52,6 +52,26 @@ def stripe_webhook(request):
             order = Order.objects.get(id=order_id)
             order.status = 'completed'
             order.save()
+            # Clear the cart and discount code after successful payment confirmation
+            from cart.views import get_cart
+            from promotions.models import DiscountCode
+            cart = get_cart(order.user)
+            cart.items.all().delete()
+            discount_code = order.user.session.get('discount_code') if hasattr(order.user, 'session') else None
+            if discount_code:
+                try:
+                    discount = DiscountCode.objects.get(code=discount_code, is_active=True)
+                    from django.db.models import F
+                    from django.db import transaction
+                    with transaction.atomic():
+                        discount.times_used = F('times_used') + 1
+                        discount.save(update_fields=['times_used'])
+                        discount.refresh_from_db(fields=['times_used'])
+                    if hasattr(order.user, 'session'):
+                        del order.user.session['discount_code']
+                        order.user.session.modified = True
+                except DiscountCode.DoesNotExist:
+                    pass
         except Order.DoesNotExist:
             pass
     elif event['type'] == 'payment_intent.payment_failed':
