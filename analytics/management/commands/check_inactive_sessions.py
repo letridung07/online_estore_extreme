@@ -10,6 +10,28 @@ DATE_FORMAT = "%Y-%m-%d"
 class Command(BaseCommand):
     help = 'Checks for inactive sessions with single page visits and adjusts bounce counts accordingly.'
 
+    def adjust_bounce_count(self, session, session_data, visited_pages_key, visited_pages_value, date):
+        """
+        Adjusts the bounce count for a session and marks it as processed.
+        
+        Args:
+            session: The Session object to update.
+            session_data: The decoded session data dictionary.
+            visited_pages_key: The key in session_data for visited pages.
+            visited_pages_value: The value associated with visited_pages_key (list of pages).
+            date: The date object to use for the cache key.
+        
+        Returns:
+            bool: True if bounce count was adjusted, False otherwise.
+        """
+        bounces_key = f"website_traffic_bounces_{date}"
+        cache.incr(bounces_key)
+        # Mark session as processed by updating the visited_pages data
+        session_data[visited_pages_key] = visited_pages_value + ["processed_bounce"]
+        session.session_data = Session.objects.encode(session_data)
+        session.save()
+        return True
+
     def handle(self, *args, **options):
         """
         Scan for sessions that have only one page visit and have been inactive for over 30 minutes.
@@ -42,35 +64,22 @@ class Command(BaseCommand):
                                 try:
                                     last_activity = timezone.datetime.fromisoformat(last_activity_str)
                                     if last_activity < inactivity_threshold:
-                                        bounces_key = f"website_traffic_bounces_{date}"
-                                        cache.incr(bounces_key)
-                                        bounces_adjusted += 1
-                                        # Mark session as processed by updating the visited_pages data
-                                        session_data[key] = value + ["processed_bounce"]
-                                        session.session_data = Session.objects.encode(session_data)
-                                        session.save()
-                                        sessions_processed += 1
+                                        if self.adjust_bounce_count(session, session_data, key, value, date):
+                                            bounces_adjusted += 1
+                                            sessions_processed += 1
                                 except ValueError:
                                     self.stderr.write(f"Invalid last_activity format for session {session.session_key}")
                                     # Fallback to expire_date for older sessions or format errors
                                     if session.expire_date < inactivity_threshold:
-                                        bounces_key = f"website_traffic_bounces_{date}"
-                                        cache.incr(bounces_key)
-                                        bounces_adjusted += 1
-                                        session_data[key] = value + ["processed_bounce"]
-                                        session.session_data = Session.objects.encode(session_data)
-                                        session.save()
-                                        sessions_processed += 1
+                                        if self.adjust_bounce_count(session, session_data, key, value, date):
+                                            bounces_adjusted += 1
+                                            sessions_processed += 1
                             else:
                                 # Fallback for sessions without last_activity timestamp
                                 if session.expire_date < inactivity_threshold:
-                                    bounces_key = f"website_traffic_bounces_{date}"
-                                    cache.incr(bounces_key)
-                                    bounces_adjusted += 1
-                                    session_data[key] = value + ["processed_bounce"]
-                                    session.session_data = Session.objects.encode(session_data)
-                                    session.save()
-                                    sessions_processed += 1
+                                    if self.adjust_bounce_count(session, session_data, key, value, date):
+                                        bounces_adjusted += 1
+                                        sessions_processed += 1
             except Exception as e:
                 self.stderr.write(f"Error processing session {session.session_key}: {str(e)}")
 

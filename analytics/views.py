@@ -12,6 +12,25 @@ from functools import wraps
 from typing import Optional, Callable, Any
 from django.http import HttpRequest, HttpResponse
 
+def generate_cache_key(base_key: str, request: HttpRequest = None, key_func: Optional[Callable] = None, *args, **kwargs) -> str:
+    """
+    Helper function to generate a cache key consistently across views.
+    
+    Args:
+        base_key (str): The base key for caching.
+        request (HttpRequest, optional): The HTTP request object.
+        key_func (Callable, optional): A function to generate a dynamic part of the cache key.
+        *args, **kwargs: Additional arguments to pass to key_func.
+    
+    Returns:
+        str: The final cache key, combining the base key with a dynamic part if provided.
+    """
+    if key_func and request:
+        dynamic_part = key_func(request, *args, **kwargs)
+        return f"{base_key}:{dynamic_part}"
+    return base_key
+
+
 def cache_view(cache_key: str, timeout: int = 300, key_func: Optional[Callable] = None) -> Callable:
     """
     A decorator that caches the data context of a view function for a specified duration.
@@ -28,10 +47,7 @@ def cache_view(cache_key: str, timeout: int = 300, key_func: Optional[Callable] 
     def decorator(view_func: Callable) -> Callable:
         @wraps(view_func)
         def wrapper(request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
-            final_cache_key = cache_key
-            if key_func:
-                dynamic_part = key_func(request, *args, **kwargs)
-                final_cache_key = f"{cache_key}:{dynamic_part}"
+            final_cache_key = generate_cache_key(cache_key, request, key_func, *args, **kwargs)
             cached_context = cache.get(final_cache_key)
             if cached_context is None:
                 # Call the view function to get the context dictionary

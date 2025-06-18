@@ -10,6 +10,10 @@ from django.db import transaction
 from django.db.models import Case, When, Value, FloatField, Func, DecimalField
 from promotions.models import DiscountCode
 from django_redis import get_redis_connection
+import logging
+
+# Set up logging for analytics signals
+logger = logging.getLogger('analytics.signals')
 
 @receiver(post_save, sender=Order)
 def update_sales_analytics(sender, instance, created, **kwargs):
@@ -114,6 +118,7 @@ def calculate_discount_amount(order):
             pre_discount_total = sum(item.total_price for item in order.items.all())
             return (pre_discount_total * discount.discount_value) / 100
     except DiscountCode.DoesNotExist:
+        logger.warning(f"Discount code not found: {order.discount_code} for order ID: {order.id}")
         return 0
     return 0
 
