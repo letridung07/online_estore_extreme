@@ -6,7 +6,8 @@ class WebsiteTrafficMiddleware:
 
     def __call__(self, request):
         # Update website traffic metrics only for relevant requests (non-static resources)
-        path = request.path_info.lower()
+        # Strip query parameters from the path to correctly identify static files
+        path = request.path_info.split('?')[0].lower()
         static_extensions = {'.css', '.js', '.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico', '.woff', '.woff2', '.ttf', '.eot', '.otf'}
         is_static = path.startswith('/static/') or any(path.endswith(ext) for ext in static_extensions)
         

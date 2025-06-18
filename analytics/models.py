@@ -70,6 +70,12 @@ class MarketingAnalytics(models.Model):
     class Meta:
         unique_together = ('campaign', 'discount_code', 'date')
         verbose_name_plural = "Marketing Analytics"
+        constraints = [
+            models.CheckConstraint(
+                check=models.Q(campaign__isnull=False) | models.Q(discount_code__isnull=False),
+                name='at_least_one_marketing_identifier'
+            )
+        ]
 
     def __str__(self):
         identifier = self.campaign.name if self.campaign else self.discount_code if self.discount_code else "General"
