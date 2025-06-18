@@ -76,11 +76,5 @@ from django.core.cache import cache
 def update_website_traffic():
     today = timezone.now().date()
     cache_key = f"website_traffic_{today}"
-    try:
-        # Attempt to use atomic increment if supported by the cache backend
-        cache.incr(cache_key)
-    except (ValueError, AttributeError):
-        # Fallback to non-atomic get/set if incr is not supported
-        current_visits = cache.get(cache_key, 0)
-        cache.set(cache_key, current_visits + 1, timeout=None)
+    cache.incr(cache_key)
     # Note: A periodic task should flush this cache to the database
