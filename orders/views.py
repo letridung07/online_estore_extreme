@@ -49,9 +49,13 @@ def checkout(request):
         from django.conf import settings
         stripe.api_key = settings.STRIPE_SECRET_KEY
         
+        from decimal import Decimal, ROUND_HALF_UP
         try:
+            # Ensure discounted_total is a Decimal and quantize to 2 decimal places
+            discounted_total_decimal = Decimal(str(discounted_total)).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+            amount_cents = int((discounted_total_decimal * 100).to_integral_value(rounding=ROUND_HALF_UP))
             payment_intent = stripe.PaymentIntent.create(
-                amount=int(discounted_total * 100),  # Amount in cents
+                amount=amount_cents,  # Amount in cents
                 currency='usd',
                 metadata={'order_id': str(order.id)},
                 description=f"Order #{order.id} for {request.user.email}",
