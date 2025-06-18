@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+
+{% block title %}Product Sync Status{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1>Product Sync Status</h1>
+    <p>View and manage the synchronization status of products across social media platforms.</p>
+    
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+    
+    {% if syncs %}
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th scope="col">Product</th>
+                    <th scope="col">Platform</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Last Synced</th>
+                    <th scope="col">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for sync in syncs %}
+                    <tr>
+                        <td>{{ sync.product.name }}</td>
+                        <td>{{ sync.platform.name }}</td>
+                        <td>
+                            {% if sync.status == 'synced' %}
+                                <span class="badge bg-success">Synced</span>
+                            {% elif sync.status == 'pending' %}
+                                <span class="badge bg-warning text-dark">Pending</span>
+                            {% else %}
+                                <span class="badge bg-danger">Failed</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ sync.synced_at|date:"Y-m-d H:i" }}</td>
+                        <td>
+                            {% if sync.status == 'failed' %}
+                                <a href="{% url 'social_integration:retry_sync' sync_id=sync.pk %}" class="btn btn-sm btn-warning">Retry</a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <div class="alert alert-info" role="alert">
+            No products are currently synced to any social media platforms.
+        </div>
+    {% endif %}
+    
+    <a href="#" class="btn btn-success">Sync New Product</a>
+</div>
+{% endblock %}

@@ -1,47 +1,66 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.core.exceptions import ValidationError
+import logging
 from .models import SocialPlatform, ProductSync
 from products.models import Product
 
+# Set up logging for debugging and error tracking
+logger = logging.getLogger(__name__)
+
 # Social Platform Management Views
 @login_required
+@user_passes_test(lambda u: u.is_staff)
 def social_platform_list(request):
     """
     View to list all social media platforms and their integration status.
+    Restricted to staff users for security.
     """
     platforms = SocialPlatform.objects.all()
     return render(request, 'social_integration/social_platform_list.html', {'platforms': platforms})
 
 @login_required
+@user_passes_test(lambda u: u.is_staff)
 def social_platform_update(request, pk):
     """
     View to update social platform details such as API keys and activation status.
+    Restricted to staff users for security.
     """
     platform = get_object_or_404(SocialPlatform, pk=pk)
     if request.method == 'POST':
-        platform.name = request.POST.get('name', platform.name)
-        platform.api_key = request.POST.get('api_key', platform.api_key)
-        platform.api_secret = request.POST.get('api_secret', platform.api_secret)
-        platform.is_active = request.POST.get('is_active') == 'on'
-        platform.save()
-        messages.success(request, f"Updated {platform.name} integration settings.")
-        return redirect('social_integration:social_platform_list')
+        try:
+            platform.name = request.POST.get('name', platform.name)
+            platform.api_key = request.POST.get('api_key', platform.api_key)
+            platform.api_secret = request.POST.get('api_secret', platform.api_secret)
+            platform.is_active = request.POST.get('is_active') == 'on'
+            platform.full_clean()  # Validate model fields before saving
+            platform.save()
+            messages.success(request, f"Updated {platform.name} integration settings.")
+            logger.info(f"Platform {platform.name} updated by user {request.user.username}")
+            return redirect('social_integration:social_platform_list')
+        except ValidationError as e:
+            messages.error(request, f"Error updating {platform.name}: {str(e)}")
+            logger.error(f"Validation error updating platform {platform.name}: {str(e)}")
     return render(request, 'social_integration/social_platform_update.html', {'platform': platform})
 
 # Product Sync Management Views
 @login_required
+@user_passes_test(lambda u: u.is_staff)
 def product_sync_list(request):
     """
     View to list sync status of products across social platforms.
+    Restricted to staff users for security.
     """
     syncs = ProductSync.objects.all().select_related('product', 'platform')
     return render(request, 'social_integration/product_sync_list.html', {'syncs': syncs})
 
 @login_required
+@user_passes_test(lambda u: u.is_staff)
 def sync_product(request, product_id, platform_id):
     """
     View to initiate syncing a product to a specific social platform.
+    Restricted to staff users for security.
     """
     product = get_object_or_404(Product, pk=product_id)
     platform = get_object_or_404(SocialPlatform, pk=platform_id)
@@ -60,24 +79,48 @@ def sync_product(request, product_id, platform_id):
         messages.info(request, f"{product.name} is already synced or pending sync to {platform.name}.")
         return redirect('social_integration:product_sync_list')
     
-    # Placeholder for actual sync logic (e.g., API call to social platform)
-    sync.status = 'pending'
-    sync.save()
-    messages.success(request, f"Initiated sync of {product.name} to {platform.name}.")
+    try:
+        # Placeholder for actual sync logic (e.g., API call to social platform)
+        # This should include:
+        # - Authenticating with platform using api_key and api_secret
+        # - Sending product data (name, description, images, etc.)
+        # - Handling response to update external_id and status
+        sync.status = 'pending'
+        sync.save()
+        messages.success(request, f"Initiated sync of {product.name} to {platform.name}.")
+        logger.info(f"Sync initiated for {product.name} to {platform.name} by {request.user.username}")
+    except Exception as e:
+        sync.status = 'failed'
+        sync.save()
+        messages.error(request, f"Failed to initiate sync for {product.name} to {platform.name}: {str(e)}")
+        logger.error(f"Sync failed for {product.name} to {platform.name}: {str(e)}")
     return redirect('social_integration:product_sync_list')
 
 @login_required
+@user_passes_test(lambda u: u.is_staff)
 def retry_sync(request, sync_id):
     """
     View to retry a failed sync operation.
+    Restricted to staff users for security.
     """
     sync = get_object_or_404(ProductSync, pk=sync_id)
     if sync.status != 'failed':
         messages.info(request, f"Sync of {sync.product.name} to {sync.platform.name} is not in a failed state.")
         return redirect('social_integration:product_sync_list')
     
-    # Placeholder for retry logic
-    sync.status = 'pending'
-    sync.save()
-    messages.success(request, f"Retrying sync of {sync.product.name} to {sync.platform.name}.")
+    try:
+        # Placeholder for retry logic
+        # This should include:
+        # - Re-authenticating with platform if necessary
+        # - Re-sending product data or updating existing external_id
+        # - Updating status based on API response
+        sync.status = 'pending'
+        sync.save()
+        messages.success(request, f"Retrying sync of {sync.product.name} to {sync.platform.name}.")
+        logger.info(f"Retry sync initiated for {sync.product.name} to {sync.platform.name} by {request.user.username}")
+    except Exception as e:
+        sync.status = 'failed'
+        sync.save()
+        messages.error(request, f"Failed to retry sync for {sync.product.name} to {sync.platform.name}: {str(e)}")
+        logger.error(f"Retry sync failed for {sync.product.name} to {sync.platform.name}: {str(e)}")
     return redirect('social_integration:product_sync_list')
