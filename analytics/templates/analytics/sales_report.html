@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+
+{% block title %}Analytics Dashboard - Sales Report{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <h1 class="mb-4">Analytics Dashboard - Sales Report</h1>
+    <p class="text-muted">Detailed sales data and trends over time.</p>
+
+    <!-- Summary Cards or Key Metrics could be added here if needed -->
+
+    <!-- Charts Row -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">Daily Sales (Last 365 Days)</div>
+                <div class="card-body">
+                    <canvas id="dailySalesChart" style="height: 300px;"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">Monthly Sales (Last 12 Months)</div>
+                <div class="card-body">
+                    <canvas id="monthlySalesChart" style="height: 300px;"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sales Data Table -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">Detailed Daily Sales Data (Last 365 Days)</div>
+                <div class="card-body">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Total Revenue ($)</th>
+                                <th>Total Orders</th>
+                                <th>Average Order Value ($)</th>
+                                <th>Discount Usage Count</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in sales_data_daily %}
+                            <tr>
+                                <td>{{ item.date }}</td>
+                                <td>{{ item.total_revenue|floatformat:2 }}</td>
+                                <td>{{ item.total_orders }}</td>
+                                <td>{{ item.average_order_value|floatformat:2 }}</td>
+                                <td>{{ item.discount_usage_count }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5">No daily sales data available.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation Links to Other Reports -->
+    <div class="row">
+        <div class="col-md-12">
+            <h4>Explore More Reports</h4>
+            <div class="list-group">
+                <a href="{% url 'analytics:dashboard' %}" class="list-group-item list-group-item-action">Dashboard Overview</a>
+                <a href="{% url 'analytics:customer_insights' %}" class="list-group-item list-group-item-action">Customer Insights</a>
+                <a href="{% url 'analytics:product_performance' %}" class="list-group-item list-group-item-action">Product Performance</a>
+                <a href="{% url 'analytics:marketing_analysis' %}" class="list-group-item list-group-item-action">Marketing Analysis</a>
+                <a href="{% url 'analytics:website_traffic' %}" class="list-group-item list-group-item-action">Website Traffic</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript for Charts -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Safely pass data from Django to JavaScript using json_script
+    const dailySalesData = JSON.parse(document.getElementById('daily-sales-data').textContent);
+    const monthlySalesData = JSON.parse(document.getElementById('monthly-sales-data').textContent);
+
+    // Daily Sales Chart
+    const dailySalesCtx = document.getElementById('dailySalesChart').getContext('2d');
+    const dailySalesChart = new Chart(dailySalesCtx, {
+        type: 'line',
+        data: {
+            labels: dailySalesData.map(item => item.date),
+            datasets: [{
+                label: 'Revenue ($)',
+                data: dailySalesData.map(item => item.total_revenue),
+                borderColor: 'rgba(54, 162, 235, 1)',
+                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                fill: true,
+                tension: 0.1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Revenue ($)'
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Date'
+                    }
+                }
+            }
+        }
+    });
+
+    // Monthly Sales Chart
+    const monthlySalesCtx = document.getElementById('monthlySalesChart').getContext('2d');
+    const monthlySalesChart = new Chart(monthlySalesCtx, {
+        type: 'bar',
+        data: {
+            labels: monthlySalesData.map(item => item.month),
+            datasets: [{
+                label: 'Revenue ($)',
+                data: monthlySalesData.map(item => item.total),
+                backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Revenue ($)'
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Month'
+                    }
+                }
+            }
+        }
+    });
+</script>
+
+<!-- Hidden elements to store JSON data -->
+<script type="application/json" id="daily-sales-data">
+    [
+        {% for item in sales_data_daily %}
+        {"date": "{{ item.date }}", "total_revenue": {{ item.total_revenue|default:0 }}},
+        {% empty %}
+        {"date": "No data", "total_revenue": 0},
+        {% endfor %}
+    ]
+</script>
+
+<script type="application/json" id="monthly-sales-data">
+    [
+        {% for item in sales_data_monthly %}
+        {"month": "{{ item.month }}", "total": {{ item.total|default:0 }}},
+        {% empty %}
+        {"month": "No data", "total": 0},
+        {% endfor %}
+    ]
+</script>
+{% endblock %}

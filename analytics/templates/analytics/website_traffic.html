@@ -1,0 +1,202 @@
+{% extends "base.html" %}
+
+{% block title %}Analytics Dashboard - Website Traffic{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <h1 class="mb-4">Analytics Dashboard - Website Traffic</h1>
+    <p class="text-muted">Analysis of website traffic and user behavior over the last 90 days.</p>
+
+    <!-- Charts Row -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">Website Visits Over Time (Last 90 Days)</div>
+                <div class="card-body">
+                    <canvas id="visitsChart" style="height: 300px;"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">Bounce Rate and Session Duration (Last 90 Days)</div>
+                <div class="card-body">
+                    <canvas id="behaviorChart" style="height: 300px;"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Traffic Data Table -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">Detailed Website Traffic Data (Last 90 Days)</div>
+                <div class="card-body">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Total Visits</th>
+                                <th>Unique Visitors</th>
+                                <th>Bounce Rate (%)</th>
+                                <th>Avg. Session Duration (s)</th>
+                                <th>Top Referral Source</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in traffic_data %}
+                            <tr>
+                                <td>{{ item.date }}</td>
+                                <td>{{ item.total_visits }}</td>
+                                <td>{{ item.unique_visitors }}</td>
+                                <td>{{ item.bounce_rate|floatformat:1 }}</td>
+                                <td>{{ item.average_session_duration|floatformat:1 }}</td>
+                                <td>{{ item.top_referral_source|default:"N/A" }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6">No website traffic data available.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation Links to Other Reports -->
+    <div class="row">
+        <div class="col-md-12">
+            <h4>Explore More Reports</h4>
+            <div class="list-group">
+                <a href="{% url 'analytics:dashboard' %}" class="list-group-item list-group-item-action">Dashboard Overview</a>
+                <a href="{% url 'analytics:sales_report' %}" class="list-group-item list-group-item-action">Sales Report</a>
+                <a href="{% url 'analytics:customer_insights' %}" class="list-group-item list-group-item-action">Customer Insights</a>
+                <a href="{% url 'analytics:product_performance' %}" class="list-group-item list-group-item-action">Product Performance</a>
+                <a href="{% url 'analytics:marketing_analysis' %}" class="list-group-item list-group-item-action">Marketing Analysis</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript for Charts -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Safely pass data from Django to JavaScript using json_script
+    const trafficData = JSON.parse(document.getElementById('traffic-data').textContent);
+
+    // Website Visits Chart
+    const visitsCtx = document.getElementById('visitsChart').getContext('2d');
+    const visitsChart = new Chart(visitsCtx, {
+        type: 'line',
+        data: {
+            labels: trafficData.map(item => item.date),
+            datasets: [{
+                label: 'Total Visits',
+                data: trafficData.map(item => item.total_visits),
+                borderColor: 'rgba(54, 162, 235, 1)',
+                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                fill: true,
+                tension: 0.1
+            }, {
+                label: 'Unique Visitors',
+                data: trafficData.map(item => item.unique_visitors),
+                borderColor: 'rgba(255, 99, 132, 1)',
+                backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                fill: true,
+                tension: 0.1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Number of Visits/Visitors'
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Date'
+                    }
+                }
+            }
+        }
+    });
+
+    // Behavior Chart (Bounce Rate and Session Duration)
+    const behaviorCtx = document.getElementById('behaviorChart').getContext('2d');
+    const behaviorChart = new Chart(behaviorCtx, {
+        type: 'line',
+        data: {
+            labels: trafficData.map(item => item.date),
+            datasets: [{
+                label: 'Bounce Rate (%)',
+                data: trafficData.map(item => item.bounce_rate),
+                borderColor: 'rgba(255, 205, 86, 1)',
+                backgroundColor: 'rgba(255, 205, 86, 0.2)',
+                fill: true,
+                tension: 0.1,
+                yAxisID: 'y1'
+            }, {
+                label: 'Avg. Session Duration (s)',
+                data: trafficData.map(item => item.average_session_duration),
+                borderColor: 'rgba(75, 192, 192, 1)',
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                fill: true,
+                tension: 0.1,
+                yAxisID: 'y2'
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y1: {
+                    type: 'linear',
+                    position: 'left',
+                    beginAtZero: true,
+                    max: 100,
+                    title: {
+                        display: true,
+                        text: 'Bounce Rate (%)'
+                    }
+                },
+                y2: {
+                    type: 'linear',
+                    position: 'right',
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Avg. Session Duration (s)'
+                    },
+                    grid: {
+                        drawOnChartArea: false
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Date'
+                    }
+                }
+            }
+        }
+    });
+</script>
+
+<!-- Hidden elements to store JSON data -->
+<script type="application/json" id="traffic-data">
+    [
+        {% for item in traffic_data %}
+        {"date": "{{ item.date }}", "total_visits": {{ item.total_visits|default:0 }}, "unique_visitors": {{ item.unique_visitors|default:0 }}, "bounce_rate": {{ item.bounce_rate|default:0 }}, "average_session_duration": {{ item.average_session_duration|default:0 }}},
+        {% empty %}
+        {"date": "No data", "total_visits": 0, "unique_visitors": 0, "bounce_rate": 0, "average_session_duration": 0},
+        {% endfor %}
+    ]
+</script>
+{% endblock %}

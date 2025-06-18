@@ -1,0 +1,206 @@
+{% extends "base.html" %}
+
+{% block title %}Analytics Dashboard - Customer Insights{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <h1 class="mb-4">Analytics Dashboard - Customer Insights</h1>
+    <p class="text-muted">Detailed analysis of customer acquisition and behavior over time.</p>
+
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card text-white bg-primary mb-3">
+                <div class="card-header">Total New Customers</div>
+                <div class="card-body">
+                    <h5 class="card-title">{{ total_new_customers }}</h5>
+                    <p class="card-text">New customers acquired in the last 365 days.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-white bg-success mb-3">
+                <div class="card-header">Total Returning Customers</div>
+                <div class="card-body">
+                    <h5 class="card-title">{{ total_returning_customers }}</h5>
+                    <p class="card-text">Returning customers in the last 365 days.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-white bg-info mb-3">
+                <div class="card-header">Average Retention Rate</div>
+                <div class="card-body">
+                    <h5 class="card-title">{{ avg_retention_rate|floatformat:1 }}%</h5>
+                    <p class="card-text">Average percentage of returning customers over the last 365 days.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">Customer Acquisition Trends (Last 365 Days)</div>
+                <div class="card-body">
+                    <canvas id="customerAcquisitionChart" style="height: 300px;"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">Retention Rate Over Time (Last 365 Days)</div>
+                <div class="card-body">
+                    <canvas id="retentionRateChart" style="height: 300px;"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Customer Data Table -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">Detailed Customer Data (Last 365 Days)</div>
+                <div class="card-body">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>New Customers</th>
+                                <th>Returning Customers</th>
+                                <th>Total Customers</th>
+                                <th>Retention Rate (%)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in customer_data %}
+                            <tr>
+                                <td>{{ item.date }}</td>
+                                <td>{{ item.new_customers }}</td>
+                                <td>{{ item.returning_customers }}</td>
+                                <td>{{ item.total_customers }}</td>
+                                <td>{{ item.retention_rate|floatformat:1 }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5">No customer data available.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation Links to Other Reports -->
+    <div class="row">
+        <div class="col-md-12">
+            <h4>Explore More Reports</h4>
+            <div class="list-group">
+                <a href="{% url 'analytics:dashboard' %}" class="list-group-item list-group-item-action">Dashboard Overview</a>
+                <a href="{% url 'analytics:sales_report' %}" class="list-group-item list-group-item-action">Sales Report</a>
+                <a href="{% url 'analytics:product_performance' %}" class="list-group-item list-group-item-action">Product Performance</a>
+                <a href="{% url 'analytics:marketing_analysis' %}" class="list-group-item list-group-item-action">Marketing Analysis</a>
+                <a href="{% url 'analytics:website_traffic' %}" class="list-group-item list-group-item-action">Website Traffic</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript for Charts -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Safely pass data from Django to JavaScript using json_script
+    const customerData = JSON.parse(document.getElementById('customer-data').textContent);
+
+    // Customer Acquisition Chart
+    const customerAcquisitionCtx = document.getElementById('customerAcquisitionChart').getContext('2d');
+    const customerAcquisitionChart = new Chart(customerAcquisitionCtx, {
+        type: 'bar',
+        data: {
+            labels: customerData.map(item => item.date),
+            datasets: [{
+                label: 'New Customers',
+                data: customerData.map(item => item.new_customers),
+                backgroundColor: 'rgba(255, 99, 132, 0.5)',
+                borderColor: 'rgba(255, 99, 132, 1)',
+                borderWidth: 1
+            }, {
+                label: 'Returning Customers',
+                data: customerData.map(item => item.returning_customers),
+                backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Number of Customers'
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Date'
+                    }
+                }
+            }
+        }
+    });
+
+    // Retention Rate Chart
+    const retentionRateCtx = document.getElementById('retentionRateChart').getContext('2d');
+    const retentionRateChart = new Chart(retentionRateCtx, {
+        type: 'line',
+        data: {
+            labels: customerData.map(item => item.date),
+            datasets: [{
+                label: 'Retention Rate (%)',
+                data: customerData.map(item => item.retention_rate),
+                borderColor: 'rgba(75, 192, 192, 1)',
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                fill: true,
+                tension: 0.1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    title: {
+                        display: true,
+                        text: 'Retention Rate (%)'
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Date'
+                    }
+                }
+            }
+        }
+    });
+</script>
+
+<!-- Hidden elements to store JSON data -->
+<script type="application/json" id="customer-data">
+    [
+        {% for item in customer_data %}
+        {"date": "{{ item.date }}", "new_customers": {{ item.new_customers|default:0 }}, "returning_customers": {{ item.returning_customers|default:0 }}, "total_customers": {{ item.total_customers|default:0 }}, "retention_rate": {{ item.retention_rate|default:0 }}},
+        {% empty %}
+        {"date": "No data", "new_customers": 0, "returning_customers": 0, "total_customers": 0, "retention_rate": 0},
+        {% endfor %}
+    ]
+</script>
+{% endblock %}
