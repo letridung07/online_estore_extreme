@@ -61,9 +61,9 @@ def dashboard_overview(request):
     
     # Product Summary
     top_products = ProductAnalytics.objects.filter(date__gte=last_30_days)\
-        .values('product__name')\
-        .annotate(total_purchases=Sum('purchase_count'))\
-        .order_by('-total_purchases')[:5]
+            .values('product__name')\
+            .annotate(total_purchases=Sum('purchase_count'))\
+            .order_by('-total_purchases')[:5]
     
     context = {
         'total_revenue_30_days': total_revenue_30_days,
@@ -83,10 +83,10 @@ def sales_report(request):
     last_365_days = timezone.now() - timedelta(days=365)
     sales_data_daily = SalesAnalytics.objects.filter(date__gte=last_365_days).order_by('date')
     sales_data_monthly = SalesAnalytics.objects.filter(date__gte=last_365_days)\
-        .annotate(month=TruncMonth('date'))\
-        .values('month')\
-        .annotate(total=Sum('total_revenue'), count=Sum('total_orders'))\
-        .order_by('month')[:12]
+            .annotate(month=TruncMonth('date'))\
+            .values('month')\
+            .annotate(total=Sum('total_revenue'), count=Sum('total_orders'))\
+            .order_by('month')[:12]
     
     context = {
         'sales_data_daily': list(sales_data_daily.values('date', 'total_revenue', 'total_orders', 'average_order_value', 'discount_usage_count')),
@@ -118,9 +118,9 @@ def customer_insights(request):
 def product_performance(request):
     last_30_days = timezone.now() - timedelta(days=30)
     product_data = ProductAnalytics.objects.filter(date__gte=last_30_days)\
-        .values('product__name', 'product__id')\
-        .annotate(total_views=Sum('views'), total_add_to_cart=Sum('add_to_cart_count'), total_purchases=Sum('purchase_count'))\
-        .order_by('-total_purchases')
+            .values('product__name', 'product__id')\
+            .annotate(total_views=Sum('views'), total_add_to_cart=Sum('add_to_cart_count'), total_purchases=Sum('purchase_count'))\
+            .order_by('-total_purchases')
     
     # Inventory overview
     low_stock_products = Product.objects.filter(stock__lt=10).order_by('stock')
@@ -142,14 +142,14 @@ def marketing_analysis(request):
     
     # Summary by campaign or discount code
     campaign_summary = MarketingAnalytics.objects.filter(date__gte=last_90_days, campaign__isnull=False)\
-        .values('campaign__name')\
-        .annotate(total_impressions=Sum('impressions'), total_clicks=Sum('clicks'), total_conversions=Sum('conversions'), total_revenue=Sum('revenue_generated'))\
-        .order_by('-total_revenue')
+            .values('campaign__name')\
+            .annotate(total_impressions=Sum('impressions'), total_clicks=Sum('clicks'), total_conversions=Sum('conversions'), total_revenue=Sum('revenue_generated'))\
+            .order_by('-total_revenue')
     
     discount_summary = MarketingAnalytics.objects.filter(date__gte=last_90_days, discount_code__isnull=False)\
-        .values('discount_code')\
-        .annotate(total_impressions=Sum('impressions'), total_clicks=Sum('clicks'), total_conversions=Sum('conversions'), total_revenue=Sum('revenue_generated'))\
-        .order_by('-total_revenue')
+            .values('discount_code')\
+            .annotate(total_impressions=Sum('impressions'), total_clicks=Sum('clicks'), total_conversions=Sum('conversions'), total_revenue=Sum('revenue_generated'))\
+            .order_by('-total_revenue')
     
     context = {
         'marketing_data': list(marketing_data.values('date', 'impressions', 'clicks', 'conversions', 'revenue_generated', 'click_through_rate', 'conversion_rate')),
