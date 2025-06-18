@@ -1,4 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.views.decorators.csrf import csrf_exempt
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
@@ -26,6 +27,7 @@ def delete_payment_method(request, method_id):
         messages.error(request, f"Failed to delete payment method: {str(e)}")
     return redirect('saved_payment_methods')
 
+@csrf_exempt
 def stripe_webhook(request):
     payload = request.body
     sig_header = request.META.get('HTTP_STRIPE_SIGNATURE')
