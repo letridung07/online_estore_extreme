@@ -55,7 +55,7 @@ def perform_sync(product, platform, sync=None):
             return ('failed', '', f"Cannot sync to {platform.name}: Integration is not active.", True)
         if not (platform.api_key and platform.api_secret):
             return ('failed', '', f"Cannot sync to {platform.name}: API credentials missing.", True)
-        # Simulate API authentication (replace with actual API call for specific platform)
+        # TODO: Implement real API authentication logic for the specific platform below.
         auth_success = True  # Placeholder for real authentication logic
         if not auth_success:
             return ('failed', '', f"Failed to authenticate with {platform.name} for syncing {product.name}.", True)
