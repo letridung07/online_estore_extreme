@@ -74,7 +74,6 @@ def update_cart_item(request, item_id):
         try:
             quantity = int(request.POST.get('quantity', 1))
             stock = cart_item.variant.stock if cart_item.variant else cart_item.product.stock
-            stock_source = cart_item.variant if cart_item.variant else cart_item.product
             if quantity > 0 and quantity <= stock:
                 cart_item.quantity = quantity
                 cart_item.save()
