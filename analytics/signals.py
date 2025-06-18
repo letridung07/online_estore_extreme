@@ -145,11 +145,14 @@ def update_website_traffic(visitor_id='unknown', request=None):
                 visited_pages.append(request.path_info)
                 session[session_key] = visited_pages
                 session.modified = True
-                cache.decr(bounces_key)
+                # Safeguard to prevent negative bounce count
+                current_bounces = cache.get(bounces_key, 0)
+                if current_bounces > 0:
+                    cache.decr(bounces_key)
             elif len(visited_pages) == 1:
                 # Still on first page, potential bounce already counted
                 pass
-            # TODO: Implement bounce count adjustment for sessions that timeout without navigating to a second page.
-            # This should be handled by a periodic task checking session data for inactivity (e.g., 30 minutes).
+            # Bounce count adjustment for sessions that timeout without navigating to a second page
+            # is handled by a periodic task 'check_inactive_sessions' which checks session data for inactivity (e.g., 30 minutes).
     
     # Note: A periodic task should flush these cache values to the database, including using scard for unique visitors count
