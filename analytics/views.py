@@ -54,18 +54,24 @@ def dashboard_overview(request):
 @login_required
 @user_passes_test(is_admin)
 def sales_report(request):
-    last_365_days = timezone.now() - timedelta(days=365)
-    sales_data_daily = SalesAnalytics.objects.filter(date__gte=last_365_days).order_by('date')
-    sales_data_monthly = SalesAnalytics.objects.filter(date__gte=last_365_days)\
-        .annotate(month=TruncMonth('date'))\
-        .values('month')\
-        .annotate(total=Sum('total_revenue'), count=Sum('total_orders'))\
-        .order_by('month')[:12]
+    # Cache key for sales report data
+    cache_key = 'analytics_sales_report_data'
+    context = cache.get(cache_key)
+    if context is None:
+        last_365_days = timezone.now() - timedelta(days=365)
+        sales_data_daily = SalesAnalytics.objects.filter(date__gte=last_365_days).order_by('date')
+        sales_data_monthly = SalesAnalytics.objects.filter(date__gte=last_365_days)\
+            .annotate(month=TruncMonth('date'))\
+            .values('month')\
+            .annotate(total=Sum('total_revenue'), count=Sum('total_orders'))\
+            .order_by('month')[:12]
+        
+        context = {
+            'sales_data_daily': list(sales_data_daily.values('date', 'total_revenue', 'total_orders', 'average_order_value', 'discount_usage_count')),
+            'sales_data_monthly': list(sales_data_monthly),
+        }
+        cache.set(cache_key, context, 300)  # Cache for 5 minutes
     
-    context = {
-        'sales_data_daily': list(sales_data_daily.values('date', 'total_revenue', 'total_orders', 'average_order_value', 'discount_usage_count')),
-        'sales_data_monthly': list(sales_data_monthly),
-    }
     return render(request, 'analytics/sales_report.html', context)
 
 @login_required
