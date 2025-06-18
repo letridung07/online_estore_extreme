@@ -8,6 +8,19 @@ from products.models import Product, ProductView
 from orders.models import Order, OrderItem
 from django.db.models.functions import TruncDay, TruncMonth
 from django.core.cache import cache
+from functools import wraps
+
+def cache_view(cache_key, timeout=300):
+    def decorator(view_func):
+        @wraps(view_func)
+        def wrapper(request, *args, **kwargs):
+            context = cache.get(cache_key)
+            if context is None:
+                context = view_func(request, *args, **kwargs)
+                cache.set(cache_key, context, timeout)
+            return context
+        return wrapper
+    return decorator
 
 ORDER_STATUSES = ['processing', 'shipped', 'delivered']
 
@@ -16,62 +29,52 @@ def is_admin(user):
 
 @login_required
 @user_passes_test(is_admin)
+@cache_view('analytics_overview_data', timeout=300)
 def dashboard_overview(request):
-    # Cache key for overview data
-    cache_key = 'analytics_overview_data'
-    context = cache.get(cache_key)
-    if context is None:
-        # Sales Summary
-        last_30_days = timezone.now() - timedelta(days=30)
-        sales_data = SalesAnalytics.objects.filter(date__gte=last_30_days).order_by('date')
-        total_revenue_30_days = sales_data.aggregate(total=Sum('total_revenue'))['total'] or 0
-        total_orders_30_days = sales_data.aggregate(total=Sum('total_orders'))['total'] or 0
-        
-        # Customer Summary
-        customer_data = CustomerAnalytics.objects.filter(date__gte=last_30_days).order_by('date')
-        new_customers_30_days = customer_data.aggregate(total=Sum('new_customers'))['total'] or 0
-        returning_customers_30_days = customer_data.aggregate(total=Sum('returning_customers'))['total'] or 0
-        
-        # Product Summary
-        top_products = ProductAnalytics.objects.filter(date__gte=last_30_days)\
-            .values('product__name')\
-            .annotate(total_purchases=Sum('purchase_count'))\
-            .order_by('-total_purchases')[:5]
-        
-        context = {
-            'total_revenue_30_days': total_revenue_30_days,
-            'total_orders_30_days': total_orders_30_days,
-            'new_customers_30_days': new_customers_30_days,
-            'returning_customers_30_days': returning_customers_30_days,
-            'top_products': list(top_products),
-            'sales_data': list(sales_data.values('date', 'total_revenue', 'total_orders')),
-            'customer_data': list(customer_data.values('date', 'new_customers', 'returning_customers')),
-        }
-        cache.set(cache_key, context, 300)  # Cache for 5 minutes
+    # Sales Summary
+    last_30_days = timezone.now() - timedelta(days=30)
+    sales_data = SalesAnalytics.objects.filter(date__gte=last_30_days).order_by('date')
+    total_revenue_30_days = sales_data.aggregate(total=Sum('total_revenue'))['total'] or 0
+    total_orders_30_days = sales_data.aggregate(total=Sum('total_orders'))['total'] or 0
     
+    # Customer Summary
+    customer_data = CustomerAnalytics.objects.filter(date__gte=last_30_days).order_by('date')
+    new_customers_30_days = customer_data.aggregate(total=Sum('new_customers'))['total'] or 0
+    returning_customers_30_days = customer_data.aggregate(total=Sum('returning_customers'))['total'] or 0
+    
+    # Product Summary
+    top_products = ProductAnalytics.objects.filter(date__gte=last_30_days)\
+        .values('product__name')\
+        .annotate(total_purchases=Sum('purchase_count'))\
+        .order_by('-total_purchases')[:5]
+    
+    context = {
+        'total_revenue_30_days': total_revenue_30_days,
+        'total_orders_30_days': total_orders_30_days,
+        'new_customers_30_days': new_customers_30_days,
+        'returning_customers_30_days': returning_customers_30_days,
+        'top_products': list(top_products),
+        'sales_data': list(sales_data.values('date', 'total_revenue', 'total_orders')),
+        'customer_data': list(customer_data.values('date', 'new_customers', 'returning_customers')),
+    }
     return render(request, 'analytics/dashboard.html', context)
 
 @login_required
 @user_passes_test(is_admin)
+@cache_view('analytics_sales_report_data', timeout=300)
 def sales_report(request):
-    # Cache key for sales report data
-    cache_key = 'analytics_sales_report_data'
-    context = cache.get(cache_key)
-    if context is None:
-        last_365_days = timezone.now() - timedelta(days=365)
-        sales_data_daily = SalesAnalytics.objects.filter(date__gte=last_365_days).order_by('date')
-        sales_data_monthly = SalesAnalytics.objects.filter(date__gte=last_365_days)\
-            .annotate(month=TruncMonth('date'))\
-            .values('month')\
-            .annotate(total=Sum('total_revenue'), count=Sum('total_orders'))\
-            .order_by('month')[:12]
-        
-        context = {
-            'sales_data_daily': list(sales_data_daily.values('date', 'total_revenue', 'total_orders', 'average_order_value', 'discount_usage_count')),
-            'sales_data_monthly': list(sales_data_monthly),
-        }
-        cache.set(cache_key, context, 300)  # Cache for 5 minutes
+    last_365_days = timezone.now() - timedelta(days=365)
+    sales_data_daily = SalesAnalytics.objects.filter(date__gte=last_365_days).order_by('date')
+    sales_data_monthly = SalesAnalytics.objects.filter(date__gte=last_365_days)\
+        .annotate(month=TruncMonth('date'))\
+        .values('month')\
+        .annotate(total=Sum('total_revenue'), count=Sum('total_orders'))\
+        .order_by('month')[:12]
     
+    context = {
+        'sales_data_daily': list(sales_data_daily.values('date', 'total_revenue', 'total_orders', 'average_order_value', 'discount_usage_count')),
+        'sales_data_monthly': list(sales_data_monthly),
+    }
     return render(request, 'analytics/sales_report.html', context)
 
 @login_required
