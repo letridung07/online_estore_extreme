@@ -6,6 +6,8 @@ from datetime import timedelta
 from products.models import Product, ProductView
 from orders.models import Order, OrderItem
 from django.db.models.functions import TruncDay, TruncMonth
+from django.db.models import Avg
+from django.db.models.functions import Coalesce
 
 def is_admin(user):
     return user.is_superuser or user.is_staff
@@ -38,8 +40,6 @@ def dashboard(request):
         .order_by('-view_count')[:5]
 
     # User Engagement
-    from django.db.models import Avg
-    from django.db.models.functions import Coalesce
 
     avg_rating = Product.objects.filter(reviews__isnull=False)\
         .aggregate(avg_rating=Coalesce(Avg('reviews__rating'), 0))
