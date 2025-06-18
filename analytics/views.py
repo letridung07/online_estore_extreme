@@ -86,7 +86,7 @@ def sales_report(request):
             .annotate(month=TruncMonth('date'))\
             .values('month')\
             .annotate(total=Sum('total_revenue'), count=Sum('total_orders'))\
-            .order_by('month')[:12]
+            .order_by('-month')[:12]
     
     context = {
         'sales_data_daily': list(sales_data_daily.values('date', 'total_revenue', 'total_orders', 'average_order_value', 'discount_usage_count')),

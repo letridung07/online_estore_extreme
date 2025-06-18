@@ -24,7 +24,11 @@ def update_sales_analytics(sender, instance, created, **kwargs):
                 updates['discount_total_amount'] = F('discount_total_amount') + discount_amount
         with transaction.atomic():
             # Combine all updates into a single operation to reduce database queries
-            updates['average_order_value'] = F('total_revenue') / F('total_orders')
+            from django.db.models import Case, When, Value, FloatField, Func
+            updates['average_order_value'] = Case(
+                When(total_orders__gt=0, then=Func(F('total_revenue') / F('total_orders'), function='ROUND', template='%(function)s(%(expressions)s, 2)')),
+                default=Value(0.0, output_field=FloatField())
+            )
             SalesAnalytics.objects.filter(date=today).update(**updates)
 
 @receiver(post_save, sender=Order)
