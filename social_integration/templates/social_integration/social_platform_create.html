@@ -38,4 +38,16 @@
         <a href="{% url 'social_integration:social_platform_list' %}" class="btn btn-secondary">Cancel</a>
     </form>
 </div>
+
+<script>
+    // Basic client-side validation for the form
+    document.querySelector('form').addEventListener('submit', function(e) {
+        const nameField = document.getElementById('name');
+        if (!nameField.value.trim()) {
+            e.preventDefault();
+            alert('Please enter a platform name.');
+            nameField.focus();
+        }
+    });
+</script>
 {% endblock %}
