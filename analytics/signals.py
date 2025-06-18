@@ -16,7 +16,19 @@ def update_sales_analytics(sender, instance, created, **kwargs):
         sales_analytics.average_order_value = sales_analytics.total_revenue / sales_analytics.total_orders
         if instance.discount_code:
             sales_analytics.discount_usage_count += 1
-            # Assuming discount amount calculation logic can be added here if available
+            try:
+                from promotions.models import DiscountCode
+                discount = DiscountCode.objects.get(code=instance.discount_code, is_active=True)
+                if discount.discount_type == 'fixed_amount':
+                    sales_analytics.discount_total_amount += discount.discount_value
+                elif discount.discount_type == 'percentage':
+                    # TODO: Calculate discount amount for percentage type
+                    # Currently, pre-discount total is not available in Order model
+                    # This needs additional logic to compute the actual discount amount
+                    pass
+            except DiscountCode.DoesNotExist:
+                # Discount code not found or inactive, skip updating discount_total_amount
+                pass
         sales_analytics.save()
 
 @receiver(post_save, sender=Order)
@@ -58,11 +70,13 @@ def update_customer_analytics_on_signup(sender, instance, created, **kwargs):
             customer_analytics.retention_rate = (customer_analytics.returning_customers / customer_analytics.total_customers) * 100
         customer_analytics.save()
 
-# Placeholder for website traffic updates, which may require additional tracking mechanisms
+# Use Django cache for website traffic updates to reduce database load
+from django.core.cache import cache
+
 def update_website_traffic():
     today = timezone.now().date()
-    traffic, _ = WebsiteTraffic.objects.get_or_create(date=today)
-    # Logic for tracking visits and other metrics would be implemented based on request tracking
-    traffic.total_visits += 1
-    # Additional logic for unique visitors, bounce rate, etc., would be added
-    traffic.save()
+    cache_key = f"website_traffic_{today}"
+    # Increment the counter in cache
+    current_visits = cache.get(cache_key, 0)
+    cache.set(cache_key, current_visits + 1, timeout=None)
+    # Note: A periodic task should flush this cache to the database
