@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     'accounts',
     'promotions',
     'analytics',
+    'social_integration',
 ]
 
 MIDDLEWARE = [
