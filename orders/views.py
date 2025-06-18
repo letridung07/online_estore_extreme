@@ -31,7 +31,8 @@ def checkout(request):
             user=request.user,
             total_price=discounted_total,
             shipping_address=shipping_address,
-            status='pending'
+            status='pending',
+            discount_code=discount_code if discount_code else ''
         )
         
         for item in cart.items.all():
