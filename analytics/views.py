@@ -14,15 +14,16 @@ from django.http import HttpRequest, HttpResponse
 
 def cache_view(cache_key: str, timeout: int = 300, key_func: Optional[Callable] = None) -> Callable:
     """
-    A decorator that caches the output of a view function for a specified duration.
+    A decorator that caches the data context of a view function for a specified duration.
+    The HttpResponse is rendered fresh on each request using the cached context to avoid serving stale or user-specific content.
     
     Args:
-        cache_key (str): The base key used for caching the view output.
+        cache_key (str): The base key used for caching the view data.
         timeout (int, optional): The duration in seconds for which the cache persists. Defaults to 300.
         key_func (Callable, optional): A function to generate a dynamic part of the cache key based on request or arguments. Defaults to None.
     
     Returns:
-        Callable: The wrapped view function with caching applied.
+        Callable: The wrapped view function with caching applied to the data context.
     """
     def decorator(view_func: Callable) -> Callable:
         @wraps(view_func)
@@ -31,15 +32,22 @@ def cache_view(cache_key: str, timeout: int = 300, key_func: Optional[Callable] 
             if key_func:
                 dynamic_part = key_func(request, *args, **kwargs)
                 final_cache_key = f"{cache_key}:{dynamic_part}"
-            context = cache.get(final_cache_key)
-            if context is None:
-                context = view_func(request, *args, **kwargs)
-                cache.set(final_cache_key, context, timeout)
-            return context
+            cached_context = cache.get(final_cache_key)
+            if cached_context is None:
+                # Call the view function to get the context dictionary
+                result = view_func(request, *args, **kwargs)
+                if isinstance(result, dict):
+                    cached_context = result
+                    cache.set(final_cache_key, cached_context, timeout)
+                else:
+                    # If the view doesn't return a dict, return the response directly without caching
+                    return result
+            # Render a fresh response using the cached context
+            template_name = getattr(view_func, '__template_name__', 'analytics/dashboard.html')
+            return render(request, template_name, cached_context)
         return wrapper
     return decorator
 
-ORDER_STATUSES = ['processing', 'shipped', 'delivered']
 
 def is_admin(user):
     return user.is_superuser or user.is_staff

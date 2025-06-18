@@ -46,15 +46,7 @@ def update_customer_analytics(sender, instance, created, **kwargs):
             updates['new_customers'] = F('new_customers') + 1
         with transaction.atomic():
             CustomerAnalytics.objects.filter(date=today).update(**updates)
-            # Update total_customers and retention_rate after increments
-            from django.db.models import Case, When, Value, FloatField
-            CustomerAnalytics.objects.filter(date=today).update(
-                total_customers=F('new_customers') + F('returning_customers'),
-                retention_rate=Case(
-                    When(total_customers__gt=0, then=(F('returning_customers') / F('total_customers')) * 100),
-                    default=Value(0.0, output_field=FloatField())
-                )
-            )
+            update_customer_metrics(today)
         # Customer lifetime value calculation can be refined based on more data
 
 @receiver(post_save, sender=ProductView)
@@ -78,14 +70,22 @@ def update_customer_analytics_on_signup(sender, instance, created, **kwargs):
             CustomerAnalytics.objects.filter(date=today).update(
                 new_customers=F('new_customers') + 1
             )
-            from django.db.models import Case, When, Value, FloatField
-            CustomerAnalytics.objects.filter(date=today).update(
-                total_customers=F('new_customers') + F('returning_customers'),
-                retention_rate=Case(
-                    When(total_customers__gt=0, then=(F('returning_customers') / F('total_customers')) * 100),
-                    default=Value(0.0, output_field=FloatField())
-                )
-            )
+            update_customer_metrics(today)
+
+def update_customer_metrics(date):
+    """
+    Helper function to update total_customers and retention_rate for CustomerAnalytics.
+    This centralizes the logic to avoid duplication.
+    """
+    from django.db.models import Case, When, Value, FloatField
+    CustomerAnalytics.objects.filter(date=date).update(
+        total_customers=F('new_customers') + F('returning_customers'),
+        retention_rate=Case(
+            When(total_customers__gt=0, then=(F('returning_customers') / F('total_customers')) * 100),
+            default=Value(0.0, output_field=FloatField())
+        )
+    )
+
 
 # Use Django cache for website traffic updates to reduce database load
 from django.core.cache import cache
@@ -111,10 +111,44 @@ def calculate_discount_amount(order):
     return 0
 
 
-def update_website_traffic():
+def update_website_traffic(visitor_id='unknown', request=None):
     today = timezone.now().date()
-    cache_key = f"website_traffic_{today}"
-    # Initialize the cache key with 0 if it doesn't exist
-    cache.add(cache_key, 0)
-    cache.incr(cache_key)
-    # Note: A periodic task should flush this cache to the database
+    total_visits_key = f"website_traffic_total_{today}"
+    unique_visitors_key = f"website_traffic_unique_{today}"
+    bounces_key = f"website_traffic_bounces_{today}"
+    
+    # Initialize cache keys if they don't exist
+    cache.add(total_visits_key, 0)
+    cache.add(unique_visitors_key, set())
+    cache.add(bounces_key, 0)
+    
+    # Increment total visits
+    cache.incr(total_visits_key)
+    
+    # Track unique visitors using a set in cache
+    unique_visitors = cache.get(unique_visitors_key)
+    if visitor_id not in unique_visitors:
+        unique_visitors.add(visitor_id)
+        cache.set(unique_visitors_key, unique_visitors)
+    
+    # Track bounce rate (single-page visits)
+    if request:
+        session = request.session
+        session_key = f"visited_pages_{visitor_id}_{today}"
+        if session_key not in session:
+            session[session_key] = [request.path_info]
+            session.modified = True
+        else:
+            visited_pages = session[session_key]
+            if len(visited_pages) == 1 and request.path_info not in visited_pages:
+                # Visitor navigated to a second page, not a bounce
+                visited_pages.append(request.path_info)
+                session[session_key] = visited_pages
+                session.modified = True
+            elif len(visited_pages) == 1:
+                # Still on first page, potential bounce (incremented on session timeout)
+                pass
+            # TODO: Implement bounce count increment for sessions that timeout without navigating to a second page.
+            # This should be handled by a periodic task checking session data for inactivity (e.g., 30 minutes).
+    
+    # Note: A periodic task should flush these cache values to the database

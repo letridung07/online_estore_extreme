@@ -12,7 +12,9 @@ class WebsiteTrafficMiddleware:
         is_static = path.startswith('/static/') or any(path.endswith(ext) for ext in static_extensions)
         
         if not is_static:
-            update_website_traffic()
+            # Use IP address as a unique identifier for tracking visitors
+            visitor_id = request.META.get('REMOTE_ADDR', 'unknown')
+            update_website_traffic(visitor_id=visitor_id, request=request)
         
         # Continue processing the request
         response = self.get_response(request)
