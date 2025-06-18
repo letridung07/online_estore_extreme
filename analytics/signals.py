@@ -45,9 +45,13 @@ def update_customer_analytics(sender, instance, created, **kwargs):
         with transaction.atomic():
             CustomerAnalytics.objects.filter(date=today).update(**updates)
             # Update total_customers and retention_rate after increments
+            from django.db.models import Case, When, Value, FloatField
             CustomerAnalytics.objects.filter(date=today).update(
                 total_customers=F('new_customers') + F('returning_customers'),
-                retention_rate=(F('returning_customers') / (F('new_customers') + F('returning_customers'))) * 100
+                retention_rate=Case(
+                    When(total_customers__gt=0, then=(F('returning_customers') / F('total_customers')) * 100),
+                    default=Value(0.0, output_field=FloatField())
+                )
             )
         # Customer lifetime value calculation can be refined based on more data
 
@@ -72,9 +76,13 @@ def update_customer_analytics_on_signup(sender, instance, created, **kwargs):
             CustomerAnalytics.objects.filter(date=today).update(
                 new_customers=F('new_customers') + 1
             )
+            from django.db.models import Case, When, Value, FloatField
             CustomerAnalytics.objects.filter(date=today).update(
                 total_customers=F('new_customers') + F('returning_customers'),
-                retention_rate=(F('returning_customers') / (F('new_customers') + F('returning_customers'))) * 100
+                retention_rate=Case(
+                    When(total_customers__gt=0, then=(F('returning_customers') / F('total_customers')) * 100),
+                    default=Value(0.0, output_field=FloatField())
+                )
             )
 
 # Use Django cache for website traffic updates to reduce database load

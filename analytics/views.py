@@ -10,7 +10,7 @@ from django.db.models.functions import TruncDay, TruncMonth
 from django.core.cache import cache
 from functools import wraps
 from typing import Optional, Callable, Dict, Any
-from django.http import HttpRequest
+from django.http import HttpRequest, HttpResponse
 
 def cache_view(cache_key: str, timeout: int = 300, key_func: Optional[Callable] = None) -> Callable:
     """
@@ -26,7 +26,7 @@ def cache_view(cache_key: str, timeout: int = 300, key_func: Optional[Callable] 
     """
     def decorator(view_func: Callable) -> Callable:
         @wraps(view_func)
-        def wrapper(request: HttpRequest, *args: Any, **kwargs: Any) -> Dict[str, Any]:
+        def wrapper(request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
             final_cache_key = cache_key
             if key_func:
                 dynamic_part = key_func(request, *args, **kwargs)
