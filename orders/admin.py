@@ -3,9 +3,9 @@ from .models import Order, OrderItem, ShippingMethod
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
-    list_display = ('id', 'user', 'total_price', 'status', 'created_at')
+    list_display = ('id', 'user', 'total_price', 'status', 'payment_intent_id', 'created_at')
     list_filter = ('status', 'created_at')
-    search_fields = ('user__username', 'id')
+    search_fields = ('user__username', 'id', 'payment_intent_id')
     readonly_fields = ('created_at', 'updated_at')
 
 @admin.register(OrderItem)
