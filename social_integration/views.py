@@ -44,6 +44,39 @@ def social_platform_update(request, pk):
             logger.error(f"Validation error updating platform {platform.name}: {str(e)}")
     return render(request, 'social_integration/social_platform_update.html', {'platform': platform})
 
+# Helper function to perform sync logic
+def perform_sync(product, platform, sync=None):
+    """
+    Handles authentication and API call simulation for syncing a product to a platform.
+    Returns a tuple: (status, external_id, message, error)
+    """
+    try:
+        if not platform.is_active:
+            return ('failed', '', f"Cannot sync to {platform.name}: Integration is not active.", True)
+        if not (platform.api_key and platform.api_secret):
+            return ('failed', '', f"Cannot sync to {platform.name}: API credentials missing.", True)
+        # Simulate API authentication (replace with actual API call for specific platform)
+        auth_success = True  # Placeholder for real authentication logic
+        if not auth_success:
+            return ('failed', '', f"Failed to authenticate with {platform.name} for syncing {product.name}.", True)
+        # Simulate sending product data (replace with actual data payload for specific platform)
+        product_data = {
+            'name': product.name,
+            'description': getattr(product, 'description', ''),
+            # Add more fields like images if available in Product model
+        }
+        # Placeholder for API response (replace with actual API call result)
+        external_id = getattr(sync, 'external_id', '') if sync else ''
+        if not external_id:
+            external_id = f"ext_{product.id}_{platform.id}"
+        api_response = {'success': True, 'external_id': external_id}
+        if api_response.get('success'):
+            return ('synced', api_response.get('external_id', ''), f"Sync of {product.name} to {platform.name} successful.", False)
+        else:
+            return ('failed', '', f"Failed to sync {product.name} to {platform.name}: API error", True)
+    except Exception as e:
+        return ('failed', '', f"Sync failed for {product.name} to {platform.name}: {str(e)}", True)
+
 # Product Sync Management Views
 @login_required
 @user_passes_test(lambda u: u.is_staff)
@@ -64,59 +97,29 @@ def sync_product(request, product_id, platform_id):
     """
     product = get_object_or_404(Product, pk=product_id)
     platform = get_object_or_404(SocialPlatform, pk=platform_id)
-    
-    if not platform.is_active:
-        messages.error(request, f"Cannot sync to {platform.name}: Integration is not active.")
-        return redirect('social_integration:product_sync_list')
-    
+
     sync, created = ProductSync.objects.get_or_create(
         product=product,
         platform=platform,
         defaults={'status': 'pending'}
     )
-    
+
     if not created and sync.status != 'failed':
         messages.info(request, f"{product.name} is already synced or pending sync to {platform.name}.")
         return redirect('social_integration:product_sync_list')
-    
-    try:
-        # Generic framework for API interaction with social platform
-        logger.info(f"Attempting to sync {product.name} to {platform.name}")
-        if platform.api_key and platform.api_secret:
-            # Simulate API authentication (replace with actual API call for specific platform)
-            auth_success = True  # Placeholder for real authentication logic
-            if auth_success:
-                # Simulate sending product data (replace with actual data payload for specific platform)
-                product_data = {
-                    'name': product.name,
-                    'description': getattr(product, 'description', ''),
-                    # Add more fields like images if available in Product model
-                }
-                # Placeholder for API response (replace with actual API call result)
-                api_response = {'success': True, 'external_id': f"ext_{product.id}_{platform.id}"}
-                if api_response.get('success'):
-                    sync.status = 'synced'
-                    sync.external_id = api_response.get('external_id', '')
-                    messages.success(request, f"Initiated sync of {product.name} to {platform.name}.")
-                    logger.info(f"Sync successful for {product.name} to {platform.name} by {request.user.username}")
-                else:
-                    sync.status = 'failed'
-                    messages.error(request, f"Failed to sync {product.name} to {platform.name}: API error")
-                    logger.error(f"Sync failed for {product.name} to {platform.name}: API error")
-            else:
-                sync.status = 'failed'
-                messages.error(request, f"Failed to authenticate with {platform.name} for syncing {product.name}.")
-                logger.error(f"Authentication failed with {platform.name} for {product.name}")
-        else:
-            sync.status = 'failed'
-            messages.error(request, f"Cannot sync to {platform.name}: API credentials missing.")
-            logger.error(f"API credentials missing for {platform.name} when syncing {product.name}")
-        sync.save()
-    except Exception as e:
-        sync.status = 'failed'
-        sync.save()
-        messages.error(request, f"Failed to initiate sync for {product.name} to {platform.name}: {str(e)}")
-        logger.error(f"Sync failed for {product.name} to {platform.name}: {str(e)}")
+
+    logger.info(f"Attempting to sync {product.name} to {platform.name}")
+    status, external_id, msg, is_error = perform_sync(product, platform, sync)
+    sync.status = status
+    if external_id:
+        sync.external_id = external_id
+    sync.save()
+    if is_error:
+        messages.error(request, msg)
+        logger.error(msg)
+    else:
+        messages.success(request, f"Initiated sync of {product.name} to {platform.name}.")
+        logger.info(f"Sync successful for {product.name} to {platform.name} by {request.user.username}")
     return redirect('social_integration:product_sync_list')
 
 @login_required
@@ -130,45 +133,19 @@ def retry_sync(request, sync_id):
     if sync.status != 'failed':
         messages.info(request, f"Sync of {sync.product.name} to {sync.platform.name} is not in a failed state.")
         return redirect('social_integration:product_sync_list')
-    
-    try:
-        # Generic framework for retrying API interaction with social platform
-        logger.info(f"Retrying sync for {sync.product.name} to {sync.platform.name}")
-        if sync.platform.api_key and sync.platform.api_secret:
-            # Simulate API re-authentication (replace with actual API call for specific platform)
-            auth_success = True  # Placeholder for real authentication logic
-            if auth_success:
-                # Simulate resending product data or updating existing (replace with actual logic)
-                product_data = {
-                    'name': sync.product.name,
-                    'description': getattr(sync.product, 'description', ''),
-                    # Add more fields if available in Product model
-                }
-                # Placeholder for API response (replace with actual API call result)
-                api_response = {'success': True, 'external_id': sync.external_id or f"ext_{sync.product.id}_{sync.platform.id}"}
-                if api_response.get('success'):
-                    sync.status = 'synced'
-                    sync.external_id = api_response.get('external_id', '')
-                    messages.success(request, f"Retrying sync of {sync.product.name} to {sync.platform.name} successful.")
-                    logger.info(f"Retry sync successful for {sync.product.name} to {sync.platform.name} by {request.user.username}")
-                else:
-                    sync.status = 'failed'
-                    messages.error(request, f"Failed to retry sync for {sync.product.name} to {sync.platform.name}: API error")
-                    logger.error(f"Retry sync failed for {sync.product.name} to {sync.platform.name}: API error")
-            else:
-                sync.status = 'failed'
-                messages.error(request, f"Failed to re-authenticate with {sync.platform.name} for retrying sync of {sync.product.name}.")
-                logger.error(f"Re-authentication failed with {sync.platform.name} for {sync.product.name}")
-        else:
-            sync.status = 'failed'
-            messages.error(request, f"Cannot retry sync to {sync.platform.name}: API credentials missing.")
-            logger.error(f"API credentials missing for {sync.platform.name} when retrying sync of {sync.product.name}")
-        sync.save()
-    except Exception as e:
-        sync.status = 'failed'
-        sync.save()
-        messages.error(request, f"Failed to retry sync for {sync.product.name} to {sync.platform.name}: {str(e)}")
-        logger.error(f"Retry sync failed for {sync.product.name} to {sync.platform.name}: {str(e)}")
+
+    logger.info(f"Retrying sync for {sync.product.name} to {sync.platform.name}")
+    status, external_id, msg, is_error = perform_sync(sync.product, sync.platform, sync)
+    sync.status = status
+    if external_id:
+        sync.external_id = external_id
+    sync.save()
+    if is_error:
+        messages.error(request, msg)
+        logger.error(msg)
+    else:
+        messages.success(request, f"Retrying sync of {sync.product.name} to {sync.platform.name} successful.")
+        logger.info(f"Retry sync successful for {sync.product.name} to {sync.platform.name} by {request.user.username}")
     return redirect('social_integration:product_sync_list')
 
 @login_required
