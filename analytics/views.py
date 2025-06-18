@@ -38,8 +38,11 @@ def dashboard(request):
         .order_by('-view_count')[:5]
 
     # User Engagement
+    from django.db.models import Avg
+    from django.db.models.functions import Coalesce
+
     avg_rating = Product.objects.filter(reviews__isnull=False)\
-        .aggregate(avg_rating=Sum('reviews__rating') / Count('reviews__id'))
+        .aggregate(avg_rating=Coalesce(Avg('reviews__rating'), 0))
 
     total_views = ProductView.objects.count()
     total_reviews = Product.objects.filter(reviews__isnull=False).count()
