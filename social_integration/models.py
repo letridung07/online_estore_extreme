@@ -35,6 +35,8 @@ class ProductSync(models.Model):
         return f"{self.product.name} on {self.platform.name} ({self.status})"
 
     class Meta:
-        unique_together = ('product', 'platform')
+        constraints = [
+            models.UniqueConstraint(fields=['product', 'platform'], name='unique_product_platform')
+        ]
         verbose_name = "Product Sync"
         verbose_name_plural = "Product Syncs"
