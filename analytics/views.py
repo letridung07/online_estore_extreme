@@ -9,11 +9,24 @@ from orders.models import Order, OrderItem
 from django.db.models.functions import TruncDay, TruncMonth
 from django.core.cache import cache
 from functools import wraps
+from typing import Optional, Callable, Dict, Any
+from django.http import HttpRequest
 
-def cache_view(cache_key, timeout=300, key_func=None):
-    def decorator(view_func):
+def cache_view(cache_key: str, timeout: int = 300, key_func: Optional[Callable] = None) -> Callable:
+    """
+    A decorator that caches the output of a view function for a specified duration.
+    
+    Args:
+        cache_key (str): The base key used for caching the view output.
+        timeout (int, optional): The duration in seconds for which the cache persists. Defaults to 300.
+        key_func (Callable, optional): A function to generate a dynamic part of the cache key based on request or arguments. Defaults to None.
+    
+    Returns:
+        Callable: The wrapped view function with caching applied.
+    """
+    def decorator(view_func: Callable) -> Callable:
         @wraps(view_func)
-        def wrapper(request, *args, **kwargs):
+        def wrapper(request: HttpRequest, *args: Any, **kwargs: Any) -> Dict[str, Any]:
             final_cache_key = cache_key
             if key_func:
                 dynamic_part = key_func(request, *args, **kwargs)
