@@ -5,6 +5,8 @@ from django.contrib.sessions.models import Session
 import json
 from datetime import timedelta
 
+DATE_FORMAT = "%Y-%m-%d"
+
 class Command(BaseCommand):
     help = 'Checks for inactive sessions with single page visits and adjusts bounce counts accordingly.'
 
@@ -28,7 +30,7 @@ class Command(BaseCommand):
                         # Extract date from the key if possible, format is visited_pages_{visitor_id}_{date}
                         try:
                             date_str = key.split("_")[-1]
-                            date = timezone.datetime.strptime(date_str, "%Y-%m-%d").date()
+                            date = timezone.datetime.strptime(date_str, DATE_FORMAT).date()
                         except (IndexError, ValueError):
                             date = timezone.now().date()
 
