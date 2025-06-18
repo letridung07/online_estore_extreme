@@ -210,9 +210,9 @@
 <script type="application/json" id="customer-data">
     [
         {% for item in customer_data %}
-        {"date": "{{ item.date }}", "newCustomers": {{ item.new_customers|default:0 }}, "returningCustomers": {{ item.returning_customers|default:0 }}},
+        {"date": "{{ item.date }}", "new_customers": {{ item.new_customers|default:0 }}, "returning_customers": {{ item.returning_customers|default:0 }}},
         {% empty %}
-        {"date": "No data", "newCustomers": 0, "returningCustomers": 0},
+        {"date": "No data", "new_customers": 0, "returning_customers": 0},
         {% endfor %}
     ]
 </script>

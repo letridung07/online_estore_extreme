@@ -84,77 +84,79 @@
 <!-- JavaScript for Charts -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    // Safely pass data from Django to JavaScript using json_script
-    const dailySalesData = JSON.parse(document.getElementById('daily-sales-data').textContent);
-    const monthlySalesData = JSON.parse(document.getElementById('monthly-sales-data').textContent);
+    document.addEventListener('DOMContentLoaded', function() {
+        // Safely pass data from Django to JavaScript using json_script
+        const dailySalesData = JSON.parse(document.getElementById('daily-sales-data').textContent);
+        const monthlySalesData = JSON.parse(document.getElementById('monthly-sales-data').textContent);
 
-    // Daily Sales Chart
-    const dailySalesCtx = document.getElementById('dailySalesChart').getContext('2d');
-    const dailySalesChart = new Chart(dailySalesCtx, {
-        type: 'line',
-        data: {
-            labels: dailySalesData.map(item => item.date),
-            datasets: [{
-                label: 'Revenue ($)',
-                data: dailySalesData.map(item => item.total_revenue),
-                borderColor: 'rgba(54, 162, 235, 1)',
-                backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                fill: true,
-                tension: 0.1
-            }]
-        },
-        options: {
-            responsive: true,
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    title: {
-                        display: true,
-                        text: 'Revenue ($)'
-                    }
-                },
-                x: {
-                    title: {
-                        display: true,
-                        text: 'Date'
+        // Daily Sales Chart
+        const dailySalesCtx = document.getElementById('dailySalesChart').getContext('2d');
+        const dailySalesChart = new Chart(dailySalesCtx, {
+            type: 'line',
+            data: {
+                labels: dailySalesData.map(item => item.date),
+                datasets: [{
+                    label: 'Revenue ($)',
+                    data: dailySalesData.map(item => item.total_revenue),
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                    fill: true,
+                    tension: 0.1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Revenue ($)'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Date'
+                        }
                     }
                 }
             }
-        }
-    });
+        });
 
-    // Monthly Sales Chart
-    const monthlySalesCtx = document.getElementById('monthlySalesChart').getContext('2d');
-    const monthlySalesChart = new Chart(monthlySalesCtx, {
-        type: 'bar',
-        data: {
-            labels: monthlySalesData.map(item => item.month),
-            datasets: [{
-                label: 'Revenue ($)',
-                data: monthlySalesData.map(item => item.total),
-                backgroundColor: 'rgba(54, 162, 235, 0.5)',
-                borderColor: 'rgba(54, 162, 235, 1)',
-                borderWidth: 1
-            }]
-        },
-        options: {
-            responsive: true,
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    title: {
-                        display: true,
-                        text: 'Revenue ($)'
-                    }
-                },
-                x: {
-                    title: {
-                        display: true,
-                        text: 'Month'
+        // Monthly Sales Chart
+        const monthlySalesCtx = document.getElementById('monthlySalesChart').getContext('2d');
+        const monthlySalesChart = new Chart(monthlySalesCtx, {
+            type: 'bar',
+            data: {
+                labels: monthlySalesData.map(item => item.month),
+                datasets: [{
+                    label: 'Revenue ($)',
+                    data: monthlySalesData.map(item => item.total),
+                    backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Revenue ($)'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Month'
+                        }
                     }
                 }
             }
-        }
+        });
     });
 </script>
 
