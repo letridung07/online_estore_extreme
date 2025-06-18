@@ -26,8 +26,8 @@ def update_customer_analytics(sender, instance, created, **kwargs):
         customer_analytics, _ = CustomerAnalytics.objects.get_or_create(date=today)
         user = instance.user
         # Check if user has previous orders to determine if returning customer
-        previous_orders = Order.objects.filter(user=user, created_at__lt=instance.created_at).count()
-        if previous_orders > 0:
+        previous_orders_exist = Order.objects.filter(user=user, created_at__lt=instance.created_at).exists()
+        if previous_orders_exist:
             customer_analytics.returning_customers += 1
         else:
             customer_analytics.new_customers += 1
