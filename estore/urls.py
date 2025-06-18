@@ -36,4 +36,5 @@ urlpatterns = [
     path('accounts/wishlist/remove-ajax/<int:product_id>/', remove_from_wishlist_ajax, name='remove_from_wishlist_ajax'),
     path('accounts/wishlist/move-to-cart/<int:item_id>/', move_to_cart, name='move_to_cart'),
     path('promotions/', include('promotions.urls')),
+    path('analytics/', include('analytics.urls')),
 ]
