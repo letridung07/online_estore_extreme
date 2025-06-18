@@ -7,6 +7,9 @@ from django.contrib.auth.models import User
 from analytics.models import SalesAnalytics, CustomerAnalytics, ProductAnalytics, WebsiteTraffic
 from django.db.models import F
 from django.db import transaction
+from django.db.models import Case, When, Value, FloatField, Func, DecimalField
+from promotions.models import DiscountCode
+from django_redis import get_redis_connection
 
 @receiver(post_save, sender=Order)
 def update_sales_analytics(sender, instance, created, **kwargs):
@@ -24,7 +27,6 @@ def update_sales_analytics(sender, instance, created, **kwargs):
                 updates['discount_total_amount'] = F('discount_total_amount') + discount_amount
         with transaction.atomic():
             # Combine all updates into a single operation to reduce database queries
-            from django.db.models import Case, When, Value, FloatField, Func, DecimalField
             updates['average_order_value'] = calculate_average_order_value(F('total_revenue'), F('total_orders'))
             SalesAnalytics.objects.filter(date=today).update(**updates)
 
@@ -74,7 +76,6 @@ def calculate_average_order_value(total_revenue, total_orders):
     Calculate the average order value given total revenue and total orders.
     Returns the average order value rounded to 2 decimal places, or 0.0 if no orders exist.
     """
-    from django.db.models import Case, When, Value, DecimalField, Func
     return Case(
         When(total_orders__gt=0, then=Func(total_revenue / total_orders, function='ROUND', template='%(function)s(%(expressions)s, 2)', output_field=DecimalField(decimal_places=2, max_digits=10))),
         default=Value(0.0, output_field=DecimalField(decimal_places=2, max_digits=10))
@@ -85,7 +86,6 @@ def update_customer_metrics(date):
     Helper function to update total_customers and retention_rate for CustomerAnalytics.
     This centralizes the logic to avoid duplication.
     """
-    from django.db.models import Case, When, Value, FloatField
     CustomerAnalytics.objects.filter(date=date).update(
         total_customers=F('new_customers') + F('returning_customers'),
         retention_rate=Case(
@@ -107,7 +107,6 @@ def calculate_discount_amount(order):
     if not order.discount_code:
         return 0
     try:
-        from promotions.models import DiscountCode
         discount = DiscountCode.objects.get(code=order.discount_code, is_active=True)
         if discount.discount_type == 'fixed_amount':
             return discount.discount_value
@@ -133,7 +132,6 @@ def update_website_traffic(visitor_id='unknown', request=None):
     cache.incr(total_visits_key)
     
     # Track unique visitors using Redis atomic set operation
-    from django_redis import get_redis_connection
     redis_conn = get_redis_connection("default")
     redis_conn.sadd(unique_visitors_key, visitor_id)
     
