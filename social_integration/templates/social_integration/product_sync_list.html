@@ -57,6 +57,6 @@
         </div>
     {% endif %}
     
-    <a href="#" class="btn btn-success">Sync New Product</a>
+    <a href="{% url 'social_integration:sync_product_select' %}" class="btn btn-success">Sync New Product</a>
 </div>
 {% endblock %}
