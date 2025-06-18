@@ -8,6 +8,9 @@ from orders.models import Order, OrderItem
 from django.db.models.functions import TruncDay, TruncMonth
 from django.db.models import Avg
 from django.db.models.functions import Coalesce
+from django.core.cache import cache
+
+ORDER_STATUSES = ['processing', 'shipped', 'delivered']
 
 def is_admin(user):
     return user.is_superuser or user.is_staff
@@ -17,20 +20,20 @@ def is_admin(user):
 def dashboard(request):
     # Sales Trends
     last_30_days = timezone.now() - timedelta(days=30)
-    sales_data = Order.objects.filter(created_at__gte=last_30_days, status__in=['processing', 'shipped', 'delivered'])\
+    sales_data = Order.objects.filter(created_at__gte=last_30_days, status__in=ORDER_STATUSES)\
         .annotate(day=TruncDay('created_at'))\
         .values('day')\
         .annotate(total=Sum('total_price'))\
         .order_by('day')
 
-    monthly_sales = Order.objects.filter(status__in=['processing', 'shipped', 'delivered'])\
+    monthly_sales = Order.objects.filter(status__in=ORDER_STATUSES)\
         .annotate(month=TruncMonth('created_at'))\
         .values('month')\
         .annotate(total=Sum('total_price'))\
         .order_by('month')[:12]
 
     # Popular Products
-    top_products = OrderItem.objects.filter(order__status__in=['processing', 'shipped', 'delivered'])\
+    top_products = OrderItem.objects.filter(order__status__in=ORDER_STATUSES)\
         .values('product__name')\
         .annotate(total_quantity=Sum('quantity'))\
         .order_by('-total_quantity')[:5]
@@ -38,13 +41,17 @@ def dashboard(request):
     most_viewed = ProductView.objects.values('product__name')\
         .annotate(view_count=Count('id'))\
         .order_by('-view_count')[:5]
-
     # User Engagement
 
     avg_rating = Product.objects.filter(reviews__isnull=False)\
-        .aggregate(avg_rating=Coalesce(Avg('reviews__rating'), 0))
+        .aggregate(avg_rating=Avg('reviews__rating'))
 
-    total_views = ProductView.objects.count()
+    total_views = cache.get('total_views_count')
+    if total_views is None:
+        total_views = ProductView.objects.count()
+        cache.set('total_views_count', total_views, 300)  # cache for 5 minutes
+
+    total_reviews = Product.objects.filter(reviews__isnull=False).count()
     total_reviews = Product.objects.filter(reviews__isnull=False).count()
 
     # Inventory Overview
