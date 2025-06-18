@@ -122,6 +122,7 @@ def product_performance(request):
 
 @login_required
 @user_passes_test(is_admin)
+@cache_view('analytics_marketing_data', timeout=300)
 def marketing_analysis(request):
     last_90_days = timezone.now() - timedelta(days=90)
     marketing_data = MarketingAnalytics.objects.filter(date__gte=last_90_days).order_by('date')
