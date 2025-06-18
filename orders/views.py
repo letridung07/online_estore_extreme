@@ -32,7 +32,7 @@ def checkout(request):
             total_price=discounted_total,
             shipping_address=shipping_address,
             status='pending',
-            discount_code=discount_code if discount_code else ''
+            discount_code=discount_code if discount_code else None
         )
         
         for item in cart.items.all():
