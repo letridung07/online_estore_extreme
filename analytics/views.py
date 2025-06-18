@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required, user_passes_test
-from django.db.models import Sum, Count, Avg
+from django.db.models import Sum, Avg
 from django.utils import timezone
 from datetime import timedelta
 from analytics.models import SalesAnalytics, CustomerAnalytics, ProductAnalytics, MarketingAnalytics, WebsiteTraffic
@@ -9,7 +9,7 @@ from orders.models import Order, OrderItem
 from django.db.models.functions import TruncDay, TruncMonth
 from django.core.cache import cache
 from functools import wraps
-from typing import Optional, Callable, Dict, Any
+from typing import Optional, Callable, Any
 from django.http import HttpRequest, HttpResponse
 
 def cache_view(cache_key: str, timeout: int = 300, key_func: Optional[Callable] = None) -> Callable:
@@ -82,7 +82,8 @@ def dashboard_overview(request):
         'sales_data': list(sales_data.values('date', 'total_revenue', 'total_orders')),
         'customer_data': list(customer_data.values('date', 'new_customers', 'returning_customers')),
     }
-    return render(request, 'analytics/dashboard.html', context)
+    return context
+dashboard_overview.__template_name__ = 'analytics/dashboard.html'
 
 @login_required
 @user_passes_test(is_admin)
@@ -100,7 +101,8 @@ def sales_report(request):
         'sales_data_daily': list(sales_data_daily.values('date', 'total_revenue', 'total_orders', 'average_order_value', 'discount_usage_count')),
         'sales_data_monthly': list(sales_data_monthly),
     }
-    return render(request, 'analytics/sales_report.html', context)
+    return context
+sales_report.__template_name__ = 'analytics/sales_report.html'
 
 @login_required
 @user_passes_test(is_admin)
@@ -164,7 +166,8 @@ def marketing_analysis(request):
         'campaign_summary': list(campaign_summary),
         'discount_summary': list(discount_summary),
     }
-    return render(request, 'analytics/marketing_analysis.html', context)
+    return context
+marketing_analysis.__template_name__ = 'analytics/marketing_analysis.html'
 
 @login_required
 @user_passes_test(is_admin)

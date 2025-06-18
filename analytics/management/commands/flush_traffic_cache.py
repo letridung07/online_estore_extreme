@@ -1,6 +1,7 @@
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 from django.core.cache import cache
+from django_redis import get_redis_connection
 from analytics.models import WebsiteTraffic
 
 class Command(BaseCommand):
@@ -14,10 +15,11 @@ class Command(BaseCommand):
         
         # Get the current visit count and other metrics from cache
         visit_count = cache.get(total_visits_key, 0)
-        unique_visitors_set = cache.get(unique_visitors_key, set())
         bounce_count = cache.get(bounces_key, 0)
         
-        unique_visitors_count = len(unique_visitors_set)
+        # Get unique visitors count directly from Redis
+        redis_conn = get_redis_connection("default")
+        unique_visitors_count = redis_conn.scard(unique_visitors_key)
         bounce_rate = 0.0
         if visit_count > 0:
             bounce_rate = (bounce_count / visit_count) * 100 if bounce_count > 0 else 0.0
@@ -33,8 +35,9 @@ class Command(BaseCommand):
             
             # Reset the cache counters for metrics that were flushed
             cache.set(total_visits_key, 0, timeout=None)
-            cache.set(unique_visitors_key, set(), timeout=None)
             cache.set(bounces_key, 0, timeout=None)
+            # Reset the Redis set for unique visitors
+            redis_conn.delete(unique_visitors_key)
             
             self.stdout.write(self.style.SUCCESS(f"Successfully flushed traffic data to database for {today}: {visit_count} visits, {unique_visitors_count} unique visitors, {bounce_rate:.2f}% bounce rate"))
         else:
