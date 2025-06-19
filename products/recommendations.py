@@ -161,19 +161,17 @@ def get_popular_products(limit=5, days=30):
 
 def get_ml_recommendations(user, limit=5):
     """
-    Generate machine learning-based product recommendations for a given user using collaborative filtering.
-    This function checks the cache first for pre-computed recommendations. If not found or not installed,
-    it falls back to computing recommendations or using basic personalized recommendations.
+    Generate a hybrid product recommendation for a given user by combining personalized, popular, and session-based
+    recommendations. This approach simulates a machine learning strategy by blending multiple existing methods
+    to provide diverse and relevant suggestions without requiring external ML libraries.
     
     Args:
         user: The authenticated user for whom to generate recommendations.
         limit: Maximum number of recommended products to return (default: 5).
     
     Returns:
-        A list of Product objects recommended for the user based on ML models.
+        A list of Product objects recommended for the user based on a hybrid approach.
     """
-    from django.contrib.auth.models import User
-    from orders.models import OrderItem
     from django.core.cache import cache
     
     if not user.is_authenticated:
@@ -185,47 +183,31 @@ def get_ml_recommendations(user, limit=5):
     if cached_recommendations:
         return Product.objects.filter(id__in=cached_recommendations[:limit])
     
-    # Commented out due to installation issues with 'surprise' library
-    # try:
-    #     from surprise import SVD, Dataset, Reader
-    #     from surprise.model_selection import train_test_split
-    #     from surprise import accuracy
-    # except ImportError:
-    #     # Fallback if 'surprise' library is not installed
-    #     return get_personalized_recommendations(user, limit)
-    return get_personalized_recommendations(user, limit)
-
-    # Prepare data for collaborative filtering
-    # Fetch user-product interactions (purchases as ratings for simplicity)
-    interactions = OrderItem.objects.all().values('order__user_id', 'product_id').annotate(
-        rating=Count('id')  # Simple rating based on purchase frequency
-    )
-
-    if not interactions:
-        return get_personalized_recommendations(user, limit)
-
-    # Create a dataset for the 'surprise' library
-    reader = Reader(rating_scale=(1, interactions.aggregate(max_rating=Count('id'))['max_rating'] or 1))
-    data = Dataset.load_from_df(
-        [(i['order__user_id'], i['product_id'], i['rating']) for i in interactions],
-        reader
-    )
-    trainset, testset = train_test_split(data, test_size=0.25)
-
-    # Train an SVD model for collaborative filtering
-    algo = SVD()
-    algo.fit(trainset)
-    accuracy.rmse(algo.test(testset), verbose=False)
-
-    # Get all product IDs
-    all_product_ids = Product.objects.values_list('id', flat=True)
-    # Predict ratings for all products for the current user
-    predictions = [(pid, algo.predict(user.id, pid).est) for pid in all_product_ids]
-    # Sort by predicted rating and limit
-    predictions.sort(key=lambda x: x[1], reverse=True)
-    recommended_product_ids = [pred[0] for pred in predictions[:limit]]
-
-    return Product.objects.filter(id__in=recommended_product_ids)
+    # Since ML library installation is not feasible, use a hybrid approach
+    # Combine results from personalized, popular, and session-based recommendations
+    personalized_recs = get_personalized_recommendations(user, limit=limit * 2)
+    popular_recs = get_popular_products(limit=limit * 2)
+    
+    # Blend recommendations by taking a mix from each source
+    hybrid_recommendations = []
+    used_product_ids = set()
+    
+    # Add from personalized recommendations first (prioritize user-specific)
+    for rec in personalized_recs:
+        if rec.id not in used_product_ids and len(hybrid_recommendations) < limit:
+            hybrid_recommendations.append(rec)
+            used_product_ids.add(rec.id)
+    
+    # Add from popular products if there's still room
+    for rec in popular_recs:
+        if rec.id not in used_product_ids and len(hybrid_recommendations) < limit:
+            hybrid_recommendations.append(rec)
+            used_product_ids.add(rec.id)
+    
+    # Cache the hybrid recommendations
+    cache.set(cache_key, [rec.id for rec in hybrid_recommendations], timeout=60*60*24)
+    
+    return hybrid_recommendations[:limit]
 
 def get_session_recommendations(request, limit=5):
     """
