@@ -108,18 +108,7 @@
     </div>
 
     <!-- Navigation Links to Other Reports -->
-    <div class="row">
-        <div class="col-md-12">
-            <h4>Explore More Reports</h4>
-            <div class="list-group">
-                <a href="{% url 'analytics:dashboard' %}" class="list-group-item list-group-item-action">Dashboard Overview</a>
-                <a href="{% url 'analytics:sales_report' %}" class="list-group-item list-group-item-action">Sales Report</a>
-                <a href="{% url 'analytics:customer_insights' %}" class="list-group-item list-group-item-action">Customer Insights</a>
-                <a href="{% url 'analytics:marketing_analysis' %}" class="list-group-item list-group-item-action">Marketing Analysis</a>
-                <a href="{% url 'analytics:website_traffic' %}" class="list-group-item list-group-item-action">Website Traffic</a>
-            </div>
-        </div>
-    </div>
+    {% include 'analytics/analytics_nav.html' %}
 </div>
 
 <!-- JavaScript for Charts -->

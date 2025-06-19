@@ -25,6 +25,8 @@ class Command(BaseCommand):
             bool: True if bounce count was adjusted, False otherwise.
         """
         bounces_key = f"website_traffic_bounces_{date}"
+        # Increment bounce count to track sessions with only one page visit 
+        # that have been inactive for over 30 minutes, indicating a bounce in website traffic analytics.
         cache.incr(bounces_key)
         # Mark session as processed by updating the visited_pages data
         session_data[visited_pages_key] = visited_pages_value + ["processed_bounce"]
