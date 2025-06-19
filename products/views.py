@@ -98,8 +98,15 @@ def product_detail(request, pk):
     # Record product view using helper
     record_product_view(product, request.user)
 
-    # Get personalized recommendations for the user
-    recommendations = get_personalized_recommendations(request.user, limit=5)
+    # Get personalized recommendations for the user, blending ML-based and session-based
+    from products.recommendations import get_ml_recommendations, get_session_recommendations
+    ml_recommendations = get_ml_recommendations(request.user, limit=3)
+    session_recommendations = get_session_recommendations(request, limit=2)
+    recommendations = list(ml_recommendations) + list(session_recommendations)
+    # Remove duplicates while preserving order
+    seen = set()
+    recommendations = [rec for rec in recommendations if not (rec.id in seen or seen.add(rec.id))]
+    recommendations = recommendations[:5]
 
     # Fetch reviews for this product (limit to latest N for performance)
     reviews = product.reviews.order_by('-created_at')[:REVIEW_DISPLAY_LIMIT]
