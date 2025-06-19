@@ -39,9 +39,11 @@ class Command(BaseCommand):
         """
         Scan for sessions that have only one page visit and have been inactive for over 30 minutes.
         Increment bounce counts for these sessions and mark them as processed to avoid double-counting.
+        Only process sessions that haven't been checked recently based on a last_checked timestamp.
         """
         self.stdout.write("Starting check for inactive sessions...")
         inactivity_threshold = timezone.now() - timedelta(minutes=30)
+        recheck_threshold = timezone.now() - timedelta(hours=1)  # Re-check sessions only after 1 hour
         sessions_processed = 0
         bounces_adjusted = 0
 
@@ -49,6 +51,17 @@ class Command(BaseCommand):
         for session in Session.objects.filter(expire_date__gte=timezone.now()):
             try:
                 session_data = session.get_decoded()
+                # Check if the session has been checked recently
+                last_checked_str = session_data.get('last_checked')
+                if last_checked_str:
+                    try:
+                        last_checked = timezone.datetime.fromisoformat(last_checked_str)
+                        if last_checked > recheck_threshold:
+                            continue  # Skip sessions checked within the last hour
+                    except ValueError:
+                        self.stderr.write(f"Invalid last_checked format for session {session.session_key}")
+                        # Process the session if the format is invalid, to be safe
+
                 # Look for keys that match the visited_pages pattern
                 for key, value in session_data.items():
                     if key.startswith("visited_pages_"):
@@ -88,6 +101,10 @@ class Command(BaseCommand):
                                     if self.adjust_bounce_count(session, session_data, key, value, date):
                                         bounces_adjusted += 1
                                         sessions_processed += 1
+                # Update last_checked timestamp for this session
+                session_data['last_checked'] = timezone.now().isoformat()
+                session.session_data = SessionStore().encode(session_data)
+                session.save()
             except Exception as e:
                 self.stderr.write(f"Error processing session {session.session_key}: {str(e)}")
 
