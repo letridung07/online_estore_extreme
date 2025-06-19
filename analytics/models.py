@@ -97,3 +97,50 @@ class WebsiteTraffic(models.Model):
 
     def __str__(self):
         return f"Website Traffic for {self.date.strftime('%Y-%m-%d')} - Visits: {self.total_visits}"
+
+
+class UserSegment(models.Model):
+    user = models.OneToOneField('auth.User', on_delete=models.CASCADE, related_name='segment')
+    segment_type = models.CharField(max_length=50, choices=[
+        ('new', 'New User'),
+        ('frequent_buyer', 'Frequent Buyer'),
+        ('high_spender', 'High Spender'),
+        ('budget_conscious', 'Budget Conscious'),
+        ('inactive', 'Inactive')
+    ], default='new')
+    purchase_frequency = models.FloatField(default=0.0, help_text="Average purchases per month")
+    average_order_value = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    last_activity = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name_plural = "User Segments"
+
+    def __str__(self):
+        return f"Segment for {self.user.username}: {self.get_segment_type_display()}"
+
+
+class RecommendationInteraction(models.Model):
+    user = models.ForeignKey('auth.User', on_delete=models.CASCADE, related_name='recommendation_interactions', null=True, blank=True)
+    product = models.ForeignKey('products.Product', on_delete=models.CASCADE, related_name='recommendation_interactions')
+    interaction_type = models.CharField(max_length=50, choices=[
+        ('view', 'View'),
+        ('click', 'Click'),
+        ('add_to_cart', 'Add to Cart'),
+        ('purchase', 'Purchase')
+    ])
+    recommendation_source = models.CharField(max_length=50, choices=[
+        ('ml', 'Machine Learning'),
+        ('session', 'Session-Based'),
+        ('personalized', 'Personalized'),
+        ('popular', 'Popular')
+    ], default='personalized')
+    interacted_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name_plural = "Recommendation Interactions"
+
+    def __str__(self):
+        user_str = self.user.username if self.user else "Anonymous"
+        return f"{self.get_interaction_type_display()} by {user_str} on {self.product.name} via {self.get_recommendation_source_display()}"
