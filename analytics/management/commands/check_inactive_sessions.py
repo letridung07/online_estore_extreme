@@ -53,9 +53,14 @@ class Command(BaseCommand):
                 for key, value in session_data.items():
                     if key.startswith("visited_pages_"):
                         # Extract date from the key if possible, format is visited_pages_{visitor_id}_{date}
+                        import re
                         try:
-                            date_str = key.split("_")[-1]
-                            date = timezone.datetime.strptime(date_str, DATE_FORMAT).date()
+                            match = re.search(r'\d{4}-\d{2}-\d{2}$', key)
+                            if match:
+                                date_str = match.group(0)
+                                date = timezone.datetime.strptime(date_str, DATE_FORMAT).date()
+                            else:
+                                date = timezone.now().date()
                         except (IndexError, ValueError):
                             date = timezone.now().date()
 
