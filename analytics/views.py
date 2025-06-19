@@ -166,16 +166,19 @@ def marketing_analysis(request):
     last_90_days = timezone.now() - timedelta(days=90)
     marketing_data = MarketingAnalytics.objects.filter(date__gte=last_90_days).order_by('date')
     
-    # Summary by campaign or discount code
-    campaign_summary = MarketingAnalytics.objects.filter(date__gte=last_90_days, campaign__isnull=False)\
-            .values('campaign__name')\
+    # Combined summary for campaigns and discount codes to reduce database queries
+    marketing_summary = MarketingAnalytics.objects.filter(date__gte=last_90_days)\
+            .values('campaign__name', 'discount_code')\
             .annotate(total_impressions=Sum('impressions'), total_clicks=Sum('clicks'), total_conversions=Sum('conversions'), total_revenue=Sum('revenue_generated'))\
             .order_by('-total_revenue')
     
-    discount_summary = MarketingAnalytics.objects.filter(date__gte=last_90_days, discount_code__isnull=False)\
-            .values('discount_code')\
-            .annotate(total_impressions=Sum('impressions'), total_clicks=Sum('clicks'), total_conversions=Sum('conversions'), total_revenue=Sum('revenue_generated'))\
-            .order_by('-total_revenue')
+    # Split the combined results into separate summaries for campaigns and discount codes
+    campaign_summary = [
+        item for item in marketing_summary if item['campaign__name'] is not None
+    ]
+    discount_summary = [
+        item for item in marketing_summary if item['discount_code'] is not None
+    ]
     
     context = {
         'marketing_data': list(marketing_data.values('date', 'impressions', 'clicks', 'conversions', 'revenue_generated', 'click_through_rate', 'conversion_rate')),
