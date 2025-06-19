@@ -31,13 +31,13 @@ def generate_cache_key(base_key: str, request: HttpRequest = None, key_func: Opt
     return base_key
 
 
-def cache_view(cache_key: str, timeout: int = 300, key_func: Optional[Callable] = None) -> Callable:
+def cache_view(base_key: str, timeout: int = 300, key_func: Optional[Callable] = None) -> Callable:
     """
     A decorator that caches the data context of a view function for a specified duration.
     The HttpResponse is rendered fresh on each request using the cached context to avoid serving stale or user-specific content.
     
     Args:
-        cache_key (str): The base key used for caching the view data.
+        base_key (str): The base key used for caching the view data.
         timeout (int, optional): The duration in seconds for which the cache persists. Defaults to 300.
         key_func (Callable, optional): A function to generate a dynamic part of the cache key based on request or arguments. Defaults to None.
     
@@ -47,7 +47,7 @@ def cache_view(cache_key: str, timeout: int = 300, key_func: Optional[Callable] 
     def decorator(view_func: Callable) -> Callable:
         @wraps(view_func)
         def wrapper(request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
-            final_cache_key = generate_cache_key(cache_key, request, key_func, *args, **kwargs)
+            final_cache_key = generate_cache_key(base_key, request, key_func, *args, **kwargs)
             cached_context = cache.get(final_cache_key)
             if cached_context is None:
                 # Call the view function to get the context dictionary

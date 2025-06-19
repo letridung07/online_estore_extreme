@@ -5,6 +5,8 @@ import logging
 logger = logging.getLogger(__name__)
 
 class WebsiteTrafficMiddleware:
+    STATIC_EXTENSIONS = {'.css', '.js', '.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico', '.woff', '.woff2', '.ttf', '.eot', '.otf'}
+
     def __init__(self, get_response):
         self.get_response = get_response
 
@@ -12,8 +14,7 @@ class WebsiteTrafficMiddleware:
         # Update website traffic metrics only for relevant requests (non-static resources)
         # Strip query parameters from the path to correctly identify static files
         path = request.path_info.split('?')[0].lower()
-        static_extensions = {'.css', '.js', '.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico', '.woff', '.woff2', '.ttf', '.eot', '.otf'}
-        is_static = path.startswith('/static/') or any(path.endswith(ext) for ext in static_extensions)
+        is_static = path.startswith('/static/') or any(path.endswith(ext) for ext in self.STATIC_EXTENSIONS)
         
         if not is_static:
             # Use session key as a unique identifier for tracking visitors (more accurate than IP)
