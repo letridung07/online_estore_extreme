@@ -1,0 +1,244 @@
+{% extends "base.html" %}
+
+{% block title %}Analytics Dashboard - Marketing Analysis{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <h1 class="mb-4">Analytics Dashboard - Marketing Analysis</h1>
+    <p class="text-muted">Performance of marketing campaigns and discount codes over the last 90 days.</p>
+
+    <!-- Charts Row -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">Campaign Performance by Revenue (Last 90 Days)</div>
+                <div class="card-body">
+                    <canvas id="campaignRevenueChart" style="height: 300px;" aria-label="Bar chart showing revenue by marketing campaign for the last 90 days."></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">Discount Code Performance by Revenue (Last 90 Days)</div>
+                <div class="card-body">
+                    <canvas id="discountRevenueChart" style="height: 300px;"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Campaign Summary Table -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">Campaign Summary (Last 90 Days)</div>
+                <div class="card-body">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Campaign Name</th>
+                                <th>Total Impressions</th>
+                                <th>Total Clicks</th>
+                                <th>Total Conversions</th>
+                                <th>Total Revenue ($)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in campaign_summary %}
+                            <tr>
+                                <td>{{ item.campaign__name }}</td>
+                                <td>{{ item.total_impressions }}</td>
+                                <td>{{ item.total_clicks }}</td>
+                                <td>{{ item.total_conversions }}</td>
+                                <td>{{ item.total_revenue|floatformat:2 }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5">No campaign data available.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Discount Code Summary Table -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">Discount Code Summary (Last 90 Days)</div>
+                <div class="card-body">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Discount Code</th>
+                                <th>Total Impressions</th>
+                                <th>Total Clicks</th>
+                                <th>Total Conversions</th>
+                                <th>Total Revenue ($)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in discount_summary %}
+                            <tr>
+                                <td>{{ item.discount_code }}</td>
+                                <td>{{ item.total_impressions }}</td>
+                                <td>{{ item.total_clicks }}</td>
+                                <td>{{ item.total_conversions }}</td>
+                                <td>{{ item.total_revenue|floatformat:2 }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5">No discount code data available.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detailed Marketing Data Table -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">Detailed Marketing Data (Last 90 Days)</div>
+                <div class="card-body">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Impressions</th>
+                                <th>Clicks</th>
+                                <th>Conversions</th>
+                                <th>Revenue Generated ($)</th>
+                                <th>Click-Through Rate (%)</th>
+                                <th>Conversion Rate (%)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in marketing_data %}
+                            <tr>
+                                <td>{{ item.date }}</td>
+                                <td>{{ item.impressions }}</td>
+                                <td>{{ item.clicks }}</td>
+                                <td>{{ item.conversions }}</td>
+                                <td>{{ item.revenue_generated|floatformat:2 }}</td>
+                                <td>{{ item.click_through_rate|floatformat:1 }}</td>
+                                <td>{{ item.conversion_rate|floatformat:1 }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7">No detailed marketing data available.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation Links to Other Reports -->
+    {% include 'analytics/analytics_nav.html' %}
+</div>
+
+<!-- JavaScript for Charts -->
+<script>
+    // Safely pass data from Django to JavaScript using json_script
+    const campaignSummary = JSON.parse(document.getElementById('campaign-summary-data').textContent);
+    const discountSummary = JSON.parse(document.getElementById('discount-summary-data').textContent);
+
+    // Campaign Revenue Chart
+    const campaignRevenueCtx = document.getElementById('campaignRevenueChart').getContext('2d');
+    const campaignRevenueChart = new Chart(campaignRevenueCtx, {
+        type: 'bar',
+        data: {
+            labels: campaignSummary.slice(0, 5).map(item => item.campaign__name),
+            datasets: [{
+                label: 'Revenue ($)',
+                data: campaignSummary.slice(0, 5).map(item => item.total_revenue),
+                backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Revenue ($)'
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Campaign Name'
+                    }
+                }
+            }
+        }
+    });
+
+    // Discount Code Revenue Chart
+    const discountRevenueCtx = document.getElementById('discountRevenueChart').getContext('2d');
+    const discountRevenueChart = new Chart(discountRevenueCtx, {
+        type: 'bar',
+        data: {
+            labels: discountSummary.slice(0, 5).map(item => item.discount_code),
+            datasets: [{
+                label: 'Revenue ($)',
+                data: discountSummary.slice(0, 5).map(item => item.total_revenue),
+                backgroundColor: 'rgba(75, 192, 192, 0.5)',
+                borderColor: 'rgba(75, 192, 192, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Revenue ($)'
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Discount Code'
+                    }
+                }
+            }
+        }
+    });
+</script>
+
+<!-- Hidden elements to store JSON data -->
+<script type="application/json" id="campaign-summary-data">
+    [
+        {% for item in campaign_summary %}
+        {"campaign__name": "{{ item.campaign__name }}", "total_impressions": {{ item.total_impressions|default:0 }}, "total_clicks": {{ item.total_clicks|default:0 }}, "total_conversions": {{ item.total_conversions|default:0 }}, "total_revenue": {{ item.total_revenue|default:0 }}},
+        {% empty %}
+        {"campaign__name": "No data", "total_impressions": 0, "total_clicks": 0, "total_conversions": 0, "total_revenue": 0},
+        {% endfor %}
+    ]
+</script>
+
+<script type="application/json" id="discount-summary-data">
+    [
+        {% for item in discount_summary %}
+        {"discount_code": "{{ item.discount_code }}", "total_impressions": {{ item.total_impressions|default:0 }}, "total_clicks": {{ item.total_clicks|default:0 }}, "total_conversions": {{ item.total_conversions|default:0 }}, "total_revenue": {{ item.total_revenue|default:0 }}},
+        {% empty %}
+        {"discount_code": "No data", "total_impressions": 0, "total_clicks": 0, "total_conversions": 0, "total_revenue": 0},
+        {% endfor %}
+    ]
+</script>
+{% endblock %}

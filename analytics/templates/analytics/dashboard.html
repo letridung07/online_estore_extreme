@@ -1,219 +1,182 @@
 {% extends "base.html" %}
 
+{% block title %}Analytics Dashboard - Overview{% endblock %}
+
 {% block content %}
-<div class="container mt-5">
-    <h1 class="mb-4">Analytics Dashboard</h1>
-    
-    <!-- Sales Trends -->
-    <div class="card mb-4">
-        <div class="card-header">
-            <h2 class="card-title mb-0">Sales Trends</h2>
-        </div>
-        <div class="card-body">
-            <div class="row">
-                <div class="col-md-6">
-                    <h3>Last 30 Days</h3>
-                    <canvas id="salesChart30Days" aria-label="Sales trends for the last 30 days">Sales trends for the last 30 days chart</canvas>
+<div class="container-fluid mt-4">
+    <h1 class="mb-4">Analytics Dashboard - Overview</h1>
+    <p class="text-muted">Summary of key metrics for the last 30 days.</p>
+
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card text-white bg-primary mb-3">
+                <div class="card-header">Total Revenue</div>
+                <div class="card-body">
+                    <h5 class="card-title">${{ total_revenue_30_days|floatformat:2 }}</h5>
+                    <p class="card-text">Total revenue for the last 30 days.</p>
                 </div>
-                <div class="col-md-6">
-                    <h3>Last 12 Months</h3>
-                    <canvas id="salesChart12Months" aria-label="Sales trends for the last 12 months">Sales trends for the last 12 months chart</canvas>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-success mb-3">
+                <div class="card-header">Total Orders</div>
+                <div class="card-body">
+                    <h5 class="card-title">{{ total_orders_30_days }}</h5>
+                    <p class="card-text">Total orders placed in the last 30 days.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-info mb-3">
+                <div class="card-header">New Customers</div>
+                <div class="card-body">
+                    <h5 class="card-title">{{ new_customers_30_days }}</h5>
+                    <p class="card-text">New customers acquired in the last 30 days.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-warning mb-3">
+                <div class="card-header">Returning Customers</div>
+                <div class="card-body">
+                    <h5 class="card-title">{{ returning_customers_30_days }}</h5>
+                    <p class="card-text">Returning customers in the last 30 days.</p>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Popular Products -->
-    <div class="card mb-4">
-        <div class="card-header">
-            <h2 class="card-title mb-0">Popular Products</h2>
-        </div>
-        <div class="card-body">
-            <div class="row">
-                <div class="col-md-6">
-                    <h3>Top Selling Products</h3>
-                    <canvas id="topProductsChart" aria-label="Top selling products">Top selling products chart</canvas>
+    <!-- Charts Row -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">Sales Trends (Last 30 Days)</div>
+                <div class="card-body">
+                    <canvas id="salesChart" style="height: 300px;"></canvas>
                 </div>
-                <div class="col-md-6">
-                    <h3>Most Viewed Products</h3>
-                    <canvas id="mostViewedChart" aria-label="Most viewed products">Most viewed products chart</canvas>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">Customer Acquisition (Last 30 Days)</div>
+                <div class="card-body">
+                    <canvas id="customerChart" style="height: 300px;"></canvas>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- User Engagement -->
-    <div class="card mb-4">
-        <div class="card-header">
-            <h2 class="card-title mb-0">User Engagement</h2>
-        </div>
-        <div class="card-body">
-            <div class="row text-center">
-                <div class="col-md-4">
-                    <h3>Average Rating</h3>
-                    <p class="display-4">{{ avg_rating|floatformat:1 }}</p>
-                </div>
-                <div class="col-md-4">
-                    <h3>Total Views</h3>
-                    <p class="display-4">{{ total_views }}</p>
-                </div>
-                <div class="col-md-4">
-                    <h3>Total Reviews</h3>
-                    <p class="display-4">{{ total_reviews }}</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Inventory Overview -->
-    <div class="card">
-        <div class="card-header">
-            <h2 class="card-title mb-0">Inventory Overview</h2>
-        </div>
-        <div class="card-body">
-            <div class="row">
-                <div class="col-md-6">
-                    <h3>Low Stock Products (Less than 10)</h3>
-                    <table class="table">
+    <!-- Top Products Table -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">Top Selling Products (Last 30 Days)</div>
+                <div class="card-body">
+                    <table class="table table-striped">
                         <thead>
                             <tr>
-                                <th>Product</th>
-                                <th>Stock</th>
+                                <th>Product Name</th>
+                                <th>Total Purchases</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {% for product in low_stock_products %}
-                            <tr class="{% if product.stock == 0 %}table-danger{% endif %}">
-                                <td>{{ product.name }}</td>
-                                <td>{{ product.stock }}</td>
+                            {% for product in top_products %}
+                            <tr>
+                                <td>{{ product.product__name }}</td>
+                                <td>{{ product.total_purchases }}</td>
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="2">No low stock products.</td>
+                                <td colspan="2">No data available for top products.</td>
                             </tr>
                             {% endfor %}
                         </tbody>
                     </table>
                 </div>
-                <div class="col-md-6 text-center">
-                    <h3>Out of Stock Products</h3>
-                    <p class="display-4">{{ out_of_stock_products }}</p>
-                </div>
             </div>
         </div>
     </div>
+
+    <!-- Navigation Links to Other Reports -->
+    {% include 'analytics/analytics_nav.html' %}
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-{{ sales_data|json_script:"salesData30Days" }}
-{{ monthly_sales|json_script:"salesData12Months" }}
-{{ top_products|json_script:"topProducts" }}
-{{ most_viewed|json_script:"mostViewed" }}
+<!-- JavaScript for Charts -->
+<script src="/static/js/chart_utils.js"></script>
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Sales Chart - Last 30 Days
-        const salesData30DaysRaw = JSON.parse(document.getElementById('salesData30Days').textContent);
-        const salesData30Days = {
-            labels: salesData30DaysRaw.length > 0 ? salesData30DaysRaw.map(item => item.day) : ["No data"],
-            datasets: [{
-                label: 'Sales ($)',
-                data: salesData30DaysRaw.length > 0 ? salesData30DaysRaw.map(item => item.total || 0) : [0],
-                fill: false,
-                borderColor: 'rgb(75, 192, 192)',
-                tension: 0.1
-            }]
-        };
+    // Safely pass data from Django to JavaScript using json_script
+    const salesData = JSON.parse(document.getElementById('sales-data').textContent);
+    const customerData = JSON.parse(document.getElementById('customer-data').textContent);
 
-        new Chart(document.getElementById('salesChart30Days'), {
-            type: 'line',
-            data: salesData30Days,
-            options: {
-                responsive: true,
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
+    // Sales Chart
+    initChart('salesChart', 'line', {
+        labels: salesData.map(item => item.date),
+        datasets: [
+            createDataset('Revenue ($)', salesData.map(item => item.total_revenue), 'rgba(54, 162, 235, 1)', 'rgba(54, 162, 235, 0.2)', { fill: true, tension: 0.1 })
+        ]
+    }, {
+        scales: {
+            y: {
+                beginAtZero: true,
+                title: {
+                    display: true,
+                    text: 'Revenue ($)'
+                }
+            },
+            x: {
+                title: {
+                    display: true,
+                    text: 'Date'
                 }
             }
-        });
-
-        // Sales Chart - Last 12 Months
-        const salesData12MonthsRaw = JSON.parse(document.getElementById('salesData12Months').textContent);
-        const salesData12Months = {
-            labels: salesData12MonthsRaw.length > 0 ? salesData12MonthsRaw.map(item => item.month) : ["No data"],
-            datasets: [{
-                label: 'Sales ($)',
-                data: salesData12MonthsRaw.length > 0 ? salesData12MonthsRaw.map(item => item.total || 0) : [0],
-                fill: false,
-                borderColor: 'rgb(75, 192, 192)',
-                tension: 0.1
-            }]
-        };
-
-        new Chart(document.getElementById('salesChart12Months'), {
-            type: 'line',
-            data: salesData12Months,
-            options: {
-                responsive: true,
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
-                }
-            }
-        });
-
-        // Top Products Chart
-        const topProductsRaw = JSON.parse(document.getElementById('topProducts').textContent);
-        const topProductsData = {
-            labels: topProductsRaw.length > 0 ? topProductsRaw.map(item => item.product__name) : ["No data"],
-            datasets: [{
-                label: 'Quantity Sold',
-                data: topProductsRaw.length > 0 ? topProductsRaw.map(item => item.total_quantity || 0) : [0],
-                backgroundColor: 'rgba(255, 99, 132, 0.5)',
-                borderColor: 'rgba(255, 99, 132, 1)',
-                borderWidth: 1
-            }]
-        };
-
-        new Chart(document.getElementById('topProductsChart'), {
-            type: 'bar',
-            data: topProductsData,
-            options: {
-                responsive: true,
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
-                }
-            }
-        });
-
-        // Most Viewed Products Chart
-        const mostViewedRaw = JSON.parse(document.getElementById('mostViewed').textContent);
-        const mostViewedData = {
-            labels: mostViewedRaw.length > 0 ? mostViewedRaw.map(item => item.product__name) : ["No data"],
-            datasets: [{
-                label: 'View Count',
-                data: mostViewedRaw.length > 0 ? mostViewedRaw.map(item => item.view_count || 0) : [0],
-                backgroundColor: 'rgba(54, 162, 235, 0.5)',
-                borderColor: 'rgba(54, 162, 235, 1)',
-                borderWidth: 1
-            }]
-        };
-
-        new Chart(document.getElementById('mostViewedChart'), {
-            type: 'bar',
-            data: mostViewedData,
-            options: {
-                responsive: true,
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
-                }
-            }
-        });
+        }
     });
+
+    // Customer Chart
+    initChart('customerChart', 'bar', {
+        labels: customerData.map(item => item.date),
+        datasets: [
+            createDataset('New Customers', customerData.map(item => item.new_customers), 'rgba(255, 99, 132, 1)', 'rgba(255, 99, 132, 0.5)'),
+            createDataset('Returning Customers', customerData.map(item => item.returning_customers), 'rgba(54, 162, 235, 1)', 'rgba(54, 162, 235, 0.5)')
+        ]
+    }, {
+        scales: {
+            y: {
+                beginAtZero: true,
+                title: {
+                    display: true,
+                    text: 'Number of Customers'
+                }
+            },
+            x: {
+                title: {
+                    display: true,
+                    text: 'Date'
+                }
+            }
+        }
+    });
+</script>
+
+<!-- Hidden elements to store JSON data -->
+<script type="application/json" id="sales-data">
+    [
+        {% for item in sales_data %}
+        {"date": "{{ item.date }}", "total_revenue": {{ item.total_revenue|default:0 }}},
+        {% empty %}
+        {"date": "No data", "total_revenue": 0},
+        {% endfor %}
+    ]
+</script>
+
+<script type="application/json" id="customer-data">
+    [
+        {% for item in customer_data %}
+        {"date": "{{ item.date }}", "new_customers": {{ item.new_customers|default:0 }}, "returning_customers": {{ item.returning_customers|default:0 }}},
+        {% empty %}
+        {"date": "No data", "new_customers": 0, "returning_customers": 0},
+        {% endfor %}
+    ]
 </script>
 {% endblock %}

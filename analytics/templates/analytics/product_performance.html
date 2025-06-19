@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+
+{% block title %}Analytics Dashboard - Product Performance{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <h1 class="mb-4">Analytics Dashboard - Product Performance</h1>
+    <p class="text-muted">Analysis of product views, purchases, and inventory status over the last 30 days.</p>
+
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card text-white bg-danger mb-3">
+                <div class="card-header">Out of Stock Products</div>
+                <div class="card-body">
+                    <h5 class="card-title">{{ out_of_stock_products }}</h5>
+                    <p class="card-text">Products currently out of stock.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card text-white bg-warning mb-3">
+                <div class="card-header">Low Stock Products</div>
+                <div class="card-body">
+                    <h5 class="card-title">{{ low_stock_products|length }}</h5>
+                    <p class="card-text">Products with stock below 10 units.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">Top Performing Products (Last 30 Days)</div>
+                <div class="card-body">
+                    <canvas id="productPerformanceChart" style="height: 300px;" aria-label="Bar chart showing top performing products over the last 30 days, including total views, add to cart, and purchases."></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Product Data Table -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">Detailed Product Performance Data (Last 30 Days)</div>
+                <div class="card-body">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Product Name</th>
+                                <th>Total Views</th>
+                                <th>Total Add to Cart</th>
+                                <th>Total Purchases</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in product_data %}
+                            <tr>
+                                <td>{{ item.product__name }}</td>
+                                <td>{{ item.total_views }}</td>
+                                <td>{{ item.total_add_to_cart }}</td>
+                                <td>{{ item.total_purchases }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4">No product performance data available.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Low Stock Products Table -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">Low Stock Products (Below 10 Units)</div>
+                <div class="card-body">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Product Name</th>
+                                <th>Current Stock</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for product in low_stock_products %}
+                            <tr>
+                                <td>{{ product.name }}</td>
+                                <td>{{ product.stock }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="2">No low stock products.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation Links to Other Reports -->
+    {% include 'analytics/analytics_nav.html' %}
+</div>
+
+<!-- JavaScript for Charts -->
+<script>
+    // Safely pass data from Django to JavaScript using json_script
+    const productData = JSON.parse(document.getElementById('product-data').textContent);
+
+    // Product Performance Chart
+    const productPerformanceCtx = document.getElementById('productPerformanceChart').getContext('2d');
+    const productPerformanceChart = new Chart(productPerformanceCtx, {
+        type: 'bar',
+        data: {
+            labels: productData.slice(0, 10).map(item => item.product__name),
+            datasets: [{
+                label: 'Total Views',
+                data: productData.slice(0, 10).map(item => item.total_views),
+                backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1
+            }, {
+                label: 'Total Add to Cart',
+                data: productData.slice(0, 10).map(item => item.total_add_to_cart),
+                backgroundColor: 'rgba(255, 205, 86, 0.5)',
+                borderColor: 'rgba(255, 205, 86, 1)',
+                borderWidth: 1
+            }, {
+                label: 'Total Purchases',
+                data: productData.slice(0, 10).map(item => item.total_purchases),
+                backgroundColor: 'rgba(75, 192, 192, 0.5)',
+                borderColor: 'rgba(75, 192, 192, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Count'
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Product Name'
+                    }
+                }
+            }
+        }
+    });
+</script>
+
+<!-- Hidden elements to store JSON data -->
+<script type="application/json" id="product-data">
+    [
+        {% for item in product_data %}
+        {"product__name": "{{ item.product__name }}", "total_views": {{ item.total_views|default:0 }}, "total_add_to_cart": {{ item.total_add_to_cart|default:0 }}, "total_purchases": {{ item.total_purchases|default:0 }}},
+        {% empty %}
+        {"product__name": "No data", "total_views": 0, "total_add_to_cart": 0, "total_purchases": 0},
+        {% endfor %}
+    ]
+</script>
+{% endblock %}
