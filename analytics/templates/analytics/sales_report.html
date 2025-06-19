@@ -157,9 +157,9 @@
 <script type="application/json" id="daily-sales-data">
     [
         {% for item in sales_data_daily %}
-        {"date": "{{ item.date }}", "total_revenue": {{ item.total_revenue|default:0 }}},
+        {"date": "{{ item.date }}", "total_revenue": {{ item.total_revenue|default:0 }}}{% if not forloop.last %},{% endif %}
         {% empty %}
-        {"date": "No data", "total_revenue": 0},
+        {"date": "No data", "total_revenue": 0}
         {% endfor %}
     ]
 </script>
@@ -167,9 +167,9 @@
 <script type="application/json" id="monthly-sales-data">
     [
         {% for item in sales_data_monthly %}
-        {"month": "{{ item.month }}", "total": {{ item.total|default:0 }}},
+        {"month": "{{ item.month }}", "total": {{ item.total|default:0 }}}{% if not forloop.last %},{% endif %}
         {% empty %}
-        {"month": "No data", "total": 0},
+        {"month": "No data", "total": 0}
         {% endfor %}
     ]
 </script>

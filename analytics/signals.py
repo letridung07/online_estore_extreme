@@ -128,6 +128,7 @@ def update_website_traffic(visitor_id='unknown', request=None):
     total_visits_key = f"website_traffic_total_{today}"
     unique_visitors_key = f"website_traffic_unique_{today}"
     bounces_key = f"website_traffic_bounces_{today}"
+    referrals_key = f"website_traffic_referrals_{today}"
     
     # Initialize cache keys if they don't exist for total visits and bounces
     cache.add(total_visits_key, 0)
@@ -165,5 +166,11 @@ def update_website_traffic(visitor_id='unknown', request=None):
                 pass
             # Bounce count adjustment for sessions that timeout without navigating to a second page
             # is handled by a periodic task 'check_inactive_sessions' which checks session data for inactivity (e.g., 30 minutes).
+        
+        # Track referral source for new visitors
+        if 'referral_source' in session and session['referral_source']:
+            referral_source = session['referral_source']
+            # Use Redis hash to count referral sources
+            redis_conn.hincrby(referrals_key, referral_source, 1)
     
     # Note: A periodic task should flush these cache values to the database, including using scard for unique visitors count

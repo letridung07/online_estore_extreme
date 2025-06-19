@@ -1,3 +1,4 @@
+from django.utils import timezone
 from analytics.signals import update_website_traffic
 import logging
 
@@ -23,6 +24,18 @@ class WebsiteTrafficMiddleware:
                 request.session.create()
             visitor_id = request.session.session_key or 'unknown'
             try:
+                # Track session start time if not already set
+                if 'session_start' not in request.session:
+                    request.session['session_start'] = timezone.now().isoformat()
+                    request.session.modified = True
+                
+                # Track referral source for new visitors
+                if 'referral_source' not in request.session:
+                    referral_source = request.META.get('HTTP_REFERER', '')
+                    if referral_source:
+                        request.session['referral_source'] = referral_source[:255]  # Limit length to match model field
+                        request.session.modified = True
+                
                 update_website_traffic(visitor_id=visitor_id, request=request)
             except Exception as e:
                 logger.error(f"Error updating website traffic: {str(e)}", exc_info=True)
