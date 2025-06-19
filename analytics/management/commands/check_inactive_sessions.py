@@ -5,6 +5,7 @@ from django.contrib.sessions.models import Session
 from django.contrib.sessions.backends.db import SessionStore
 import json
 from datetime import timedelta
+import re
 
 DATE_FORMAT = "%Y-%m-%d"
 
@@ -66,7 +67,6 @@ class Command(BaseCommand):
                 for key, value in session_data.items():
                     if key.startswith("visited_pages_"):
                         # Extract date from the key if possible, format is visited_pages_{visitor_id}_{date}
-                        import re
                         try:
                             match = re.search(r'\d{4}-\d{2}-\d{2}$', key)
                             if match:
