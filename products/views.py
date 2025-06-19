@@ -98,15 +98,34 @@ def product_detail(request, pk):
     # Record product view using helper
     record_product_view(product, request.user)
 
-    # Get personalized recommendations for the user, blending ML-based and session-based
-    from products.recommendations import get_ml_recommendations, get_session_recommendations
-    ml_recommendations = get_ml_recommendations(request.user, limit=3)
-    session_recommendations = get_session_recommendations(request, limit=2)
-    recommendations = list(ml_recommendations) + list(session_recommendations)
-    # Remove duplicates while preserving order
-    seen = set()
-    recommendations = [rec for rec in recommendations if not (rec.id in seen or seen.add(rec.id))]
-    recommendations = recommendations[:5]
+    # Get personalized recommendations for the user with A/B testing
+    from products.recommendations import get_ml_recommendations, get_session_recommendations, get_personalized_recommendations
+    from analytics.models import RecommendationInteraction
+    import random
+
+    # A/B Testing logic: Alternate between strategies for comparison
+    test_group = random.choice(['ml', 'session', 'personalized'])
+    request.session['recommendation_test_group'] = test_group
+    request.session.modified = True
+
+    if test_group == 'ml':
+        recommendations = get_ml_recommendations(request.user, limit=5)
+        source = 'ml'
+    elif test_group == 'session':
+        recommendations = get_session_recommendations(request, limit=5)
+        source = 'session'
+    else:
+        recommendations = get_personalized_recommendations(request.user, limit=5)
+        source = 'personalized'
+
+    # Log the view interaction for analytics
+    for rec in recommendations:
+        RecommendationInteraction.objects.create(
+            user=request.user if request.user.is_authenticated else None,
+            product=rec,
+            interaction_type='view',
+            recommendation_source=source
+        )
 
     # Fetch reviews for this product (limit to latest N for performance)
     reviews = product.reviews.order_by('-created_at')[:REVIEW_DISPLAY_LIMIT]

@@ -185,13 +185,15 @@ def get_ml_recommendations(user, limit=5):
     if cached_recommendations:
         return Product.objects.filter(id__in=cached_recommendations[:limit])
     
-    try:
-        from surprise import SVD, Dataset, Reader
-        from surprise.model_selection import train_test_split
-        from surprise import accuracy
-    except ImportError:
-        # Fallback if 'surprise' library is not installed
-        return get_personalized_recommendations(user, limit)
+    # Commented out due to installation issues with 'surprise' library
+    # try:
+    #     from surprise import SVD, Dataset, Reader
+    #     from surprise.model_selection import train_test_split
+    #     from surprise import accuracy
+    # except ImportError:
+    #     # Fallback if 'surprise' library is not installed
+    #     return get_personalized_recommendations(user, limit)
+    return get_personalized_recommendations(user, limit)
 
     # Prepare data for collaborative filtering
     # Fetch user-product interactions (purchases as ratings for simplicity)
