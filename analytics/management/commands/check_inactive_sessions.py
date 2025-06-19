@@ -2,6 +2,7 @@ from django.core.management.base import BaseCommand
 from django.utils import timezone
 from django.core.cache import cache
 from django.contrib.sessions.models import Session
+from django.contrib.sessions.backends.db import SessionStore
 import json
 from datetime import timedelta
 
@@ -30,7 +31,7 @@ class Command(BaseCommand):
         cache.incr(bounces_key)
         # Mark session as processed by updating the visited_pages data
         session_data[visited_pages_key] = visited_pages_value + ["processed_bounce"]
-        session.session_data = Session.objects.encode(session_data)
+        session.session_data = SessionStore().encode(session_data)
         session.save()
         return True
 

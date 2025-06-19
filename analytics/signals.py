@@ -12,6 +12,9 @@ from promotions.models import DiscountCode
 from django_redis import get_redis_connection
 import logging
 
+# Cache for Redis connection to avoid repeated connection overhead
+_redis_conn = None
+
 # Set up logging for analytics signals
 logger = logging.getLogger('analytics.signals')
 
@@ -138,7 +141,10 @@ def update_website_traffic(visitor_id='unknown', request=None):
     cache.incr(total_visits_key)
     
     # Track unique visitors using Redis atomic set operation
-    redis_conn = get_redis_connection("default")
+    global _redis_conn
+    if _redis_conn is None:
+        _redis_conn = get_redis_connection("default")
+    redis_conn = _redis_conn
     redis_conn.sadd(unique_visitors_key, visitor_id)
     
     # Track bounce rate (single-page visits)
