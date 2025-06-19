@@ -38,9 +38,9 @@ class WebsiteTrafficMiddleware:
                             # Validate URL format
                             parsed = urllib.parse.urlparse(referral_source)
                             if parsed.scheme and parsed.netloc:
-                                # Optionally, check for trusted domains (example list, adjust as needed)
-                                trusted_domains = {'example.com', 'yourdomain.com'}
-                                if parsed.netloc in trusted_domains:
+                                # Check for trusted domains from settings
+                                from django.conf import settings
+                                if parsed.netloc in settings.TRUSTED_DOMAINS:
                                     request.session['referral_source'] = referral_source[:255]  # Limit length to match model field
                                 else:
                                     request.session['referral_source'] = f"untrusted:{referral_source[:247]}"  # Mark as untrusted, limit length
