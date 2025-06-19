@@ -2,6 +2,10 @@ from django.utils import timezone
 from analytics.signals import update_website_traffic
 import logging
 import urllib.parse
+from django.conf import settings
+
+# Precompute lowercase trusted domains at module load
+LOWER_TRUSTED_DOMAINS = {domain.lower() for domain in settings.TRUSTED_DOMAINS}
 
 # Configure logger for traffic middleware
 logger = logging.getLogger(__name__)
@@ -38,9 +42,8 @@ class WebsiteTrafficMiddleware:
                             # Validate URL format
                             parsed = urllib.parse.urlparse(referral_source)
                             if parsed.scheme and parsed.netloc:
-                                # Check for trusted domains from settings
-                                from django.conf import settings
-                                if parsed.netloc.lower() in [domain.lower() for domain in settings.TRUSTED_DOMAINS]:
+                                # Check for trusted domains using precomputed set
+                                if parsed.netloc.lower() in LOWER_TRUSTED_DOMAINS:
                                     request.session['referral_source'] = referral_source[:255]  # Limit length to match model field
                                 else:
                                     request.session['referral_source'] = f"untrusted:{referral_source[:247]}"  # Mark as untrusted, limit length
