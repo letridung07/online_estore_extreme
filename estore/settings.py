@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -140,7 +141,6 @@ STATICFILES_DIRS = [
 
 # Cache configuration
 # https://docs.djangoproject.com/en/5.2/topics/cache/
-import os
 CACHES = {
     'default': {
         'BACKEND': 'django_redis.cache.RedisCache',
@@ -174,7 +174,6 @@ ACCOUNT_USERNAME_MIN_LENGTH = 4
 LOGIN_URL = '/accounts/login/'
 
 # Stripe Configuration for Payment Processing
-import os
 STRIPE_PUBLIC_KEY = os.getenv('STRIPE_PUBLIC_KEY', '')
 STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY', '')
 STRIPE_WEBHOOK_SECRET = os.getenv('STRIPE_WEBHOOK_SECRET', '')

@@ -75,106 +75,71 @@
 
 <!-- JavaScript for Charts -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="/static/js/chart_utils.js"></script>
 <script>
     // Safely pass data from Django to JavaScript using json_script
     const trafficData = JSON.parse(document.getElementById('traffic-data').textContent);
 
     // Website Visits Chart
-    const visitsCtx = document.getElementById('visitsChart').getContext('2d');
-    const visitsChart = new Chart(visitsCtx, {
-        type: 'line',
-        data: {
-            labels: trafficData.map(item => item.date),
-            datasets: [{
-                label: 'Total Visits',
-                data: trafficData.map(item => item.total_visits),
-                borderColor: 'rgba(54, 162, 235, 1)',
-                backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                fill: true,
-                tension: 0.1
-            }, {
-                label: 'Unique Visitors',
-                data: trafficData.map(item => item.unique_visitors),
-                borderColor: 'rgba(255, 99, 132, 1)',
-                backgroundColor: 'rgba(255, 99, 132, 0.2)',
-                fill: true,
-                tension: 0.1
-            }]
-        },
-        options: {
-            responsive: true,
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    title: {
-                        display: true,
-                        text: 'Number of Visits/Visitors'
-                    }
-                },
-                x: {
-                    title: {
-                        display: true,
-                        text: 'Date'
-                    }
+    initChart('visitsChart', 'line', {
+        labels: trafficData.map(item => item.date),
+        datasets: [
+            createDataset('Total Visits', trafficData.map(item => item.total_visits), 'rgba(54, 162, 235, 1)', 'rgba(54, 162, 235, 0.2)', { fill: true, tension: 0.1 }),
+            createDataset('Unique Visitors', trafficData.map(item => item.unique_visitors), 'rgba(255, 99, 132, 1)', 'rgba(255, 99, 132, 0.2)', { fill: true, tension: 0.1 })
+        ]
+    }, {
+        scales: {
+            y: {
+                beginAtZero: true,
+                title: {
+                    display: true,
+                    text: 'Number of Visits/Visitors'
+                }
+            },
+            x: {
+                title: {
+                    display: true,
+                    text: 'Date'
                 }
             }
         }
     });
 
     // Behavior Chart (Bounce Rate and Session Duration)
-    const behaviorCtx = document.getElementById('behaviorChart').getContext('2d');
-    const behaviorChart = new Chart(behaviorCtx, {
-        type: 'line',
-        data: {
-            labels: trafficData.map(item => item.date),
-            datasets: [{
-                label: 'Bounce Rate (%)',
-                data: trafficData.map(item => item.bounce_rate),
-                borderColor: 'rgba(255, 205, 86, 1)',
-                backgroundColor: 'rgba(255, 205, 86, 0.2)',
-                fill: true,
-                tension: 0.1,
-                yAxisID: 'y1'
-            }, {
-                label: 'Avg. Session Duration (s)',
-                data: trafficData.map(item => item.average_session_duration),
-                borderColor: 'rgba(75, 192, 192, 1)',
-                backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                fill: true,
-                tension: 0.1,
-                yAxisID: 'y2'
-            }]
-        },
-        options: {
-            responsive: true,
-            scales: {
-                y1: {
-                    type: 'linear',
-                    position: 'left',
-                    beginAtZero: true,
-                    max: 100,
-                    title: {
-                        display: true,
-                        text: 'Bounce Rate (%)'
-                    }
+    initChart('behaviorChart', 'line', {
+        labels: trafficData.map(item => item.date),
+        datasets: [
+            createDataset('Bounce Rate (%)', trafficData.map(item => item.bounce_rate), 'rgba(255, 205, 86, 1)', 'rgba(255, 205, 86, 0.2)', { fill: true, tension: 0.1, yAxisID: 'y1' }),
+            createDataset('Avg. Session Duration (s)', trafficData.map(item => item.average_session_duration), 'rgba(75, 192, 192, 1)', 'rgba(75, 192, 192, 0.2)', { fill: true, tension: 0.1, yAxisID: 'y2' })
+        ]
+    }, {
+        scales: {
+            y1: {
+                type: 'linear',
+                position: 'left',
+                beginAtZero: true,
+                max: 100,
+                title: {
+                    display: true,
+                    text: 'Bounce Rate (%)'
+                }
+            },
+            y2: {
+                type: 'linear',
+                position: 'right',
+                beginAtZero: true,
+                title: {
+                    display: true,
+                    text: 'Avg. Session Duration (s)'
                 },
-                y2: {
-                    type: 'linear',
-                    position: 'right',
-                    beginAtZero: true,
-                    title: {
-                        display: true,
-                        text: 'Avg. Session Duration (s)'
-                    },
-                    grid: {
-                        drawOnChartArea: false
-                    }
-                },
-                x: {
-                    title: {
-                        display: true,
-                        text: 'Date'
-                    }
+                grid: {
+                    drawOnChartArea: false
+                }
+            },
+            x: {
+                title: {
+                    display: true,
+                    text: 'Date'
                 }
             }
         }

@@ -34,7 +34,7 @@ def update_sales_analytics(sender, instance, created, **kwargs):
                 updates['discount_total_amount'] = F('discount_total_amount') + discount_amount
         with transaction.atomic():
             # Combine all updates into a single operation to reduce database queries
-            updates['average_order_value'] = calculate_average_order_value(F('total_revenue'), F('total_orders'))
+            updates['average_order_value'] = calculate_average_order_value(F('total_revenue') + instance.total_price, F('total_orders') + 1)
             SalesAnalytics.objects.filter(date=today).update(**updates)
 
 @receiver(post_save, sender=Order)

@@ -104,81 +104,56 @@
 
 <!-- JavaScript for Charts -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="/static/js/chart_utils.js"></script>
 <script>
     // Safely pass data from Django to JavaScript using json_script
     const salesData = JSON.parse(document.getElementById('sales-data').textContent);
     const customerData = JSON.parse(document.getElementById('customer-data').textContent);
 
     // Sales Chart
-    const salesCtx = document.getElementById('salesChart').getContext('2d');
-    const salesChart = new Chart(salesCtx, {
-        type: 'line',
-        data: {
-            labels: salesData.map(item => item.date),
-            datasets: [{
-                label: 'Revenue ($)',
-                data: salesData.map(item => item.total_revenue),
-                borderColor: 'rgba(54, 162, 235, 1)',
-                backgroundColor: 'rgba(54, 162, 235, 0.2)',
-                fill: true,
-                tension: 0.1
-            }]
-        },
-        options: {
-            responsive: true,
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    title: {
-                        display: true,
-                        text: 'Revenue ($)'
-                    }
-                },
-                x: {
-                    title: {
-                        display: true,
-                        text: 'Date'
-                    }
+    initChart('salesChart', 'line', {
+        labels: salesData.map(item => item.date),
+        datasets: [
+            createDataset('Revenue ($)', salesData.map(item => item.total_revenue), 'rgba(54, 162, 235, 1)', 'rgba(54, 162, 235, 0.2)', { fill: true, tension: 0.1 })
+        ]
+    }, {
+        scales: {
+            y: {
+                beginAtZero: true,
+                title: {
+                    display: true,
+                    text: 'Revenue ($)'
+                }
+            },
+            x: {
+                title: {
+                    display: true,
+                    text: 'Date'
                 }
             }
         }
     });
 
     // Customer Chart
-    const customerCtx = document.getElementById('customerChart').getContext('2d');
-    const customerChart = new Chart(customerCtx, {
-        type: 'bar',
-        data: {
-            labels: customerData.map(item => item.date),
-            datasets: [{
-                label: 'New Customers',
-                data: customerData.map(item => item.new_customers),
-                backgroundColor: 'rgba(255, 99, 132, 0.5)',
-                borderColor: 'rgba(255, 99, 132, 1)',
-                borderWidth: 1
-            }, {
-                label: 'Returning Customers',
-                data: customerData.map(item => item.returning_customers),
-                backgroundColor: 'rgba(54, 162, 235, 0.5)',
-                borderColor: 'rgba(54, 162, 235, 1)',
-                borderWidth: 1
-            }]
-        },
-        options: {
-            responsive: true,
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    title: {
-                        display: true,
-                        text: 'Number of Customers'
-                    }
-                },
-                x: {
-                    title: {
-                        display: true,
-                        text: 'Date'
-                    }
+    initChart('customerChart', 'bar', {
+        labels: customerData.map(item => item.date),
+        datasets: [
+            createDataset('New Customers', customerData.map(item => item.new_customers), 'rgba(255, 99, 132, 1)', 'rgba(255, 99, 132, 0.5)'),
+            createDataset('Returning Customers', customerData.map(item => item.returning_customers), 'rgba(54, 162, 235, 1)', 'rgba(54, 162, 235, 0.5)')
+        ]
+    }, {
+        scales: {
+            y: {
+                beginAtZero: true,
+                title: {
+                    display: true,
+                    text: 'Number of Customers'
+                }
+            },
+            x: {
+                title: {
+                    display: true,
+                    text: 'Date'
                 }
             }
         }
