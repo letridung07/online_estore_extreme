@@ -1,4 +1,8 @@
 from analytics.signals import update_website_traffic
+import logging
+
+# Configure logger for traffic middleware
+logger = logging.getLogger(__name__)
 
 class WebsiteTrafficMiddleware:
     def __init__(self, get_response):
@@ -17,7 +21,10 @@ class WebsiteTrafficMiddleware:
             if not request.session.session_key:
                 request.session.create()
             visitor_id = request.session.session_key or 'unknown'
-            update_website_traffic(visitor_id=visitor_id, request=request)
+            try:
+                update_website_traffic(visitor_id=visitor_id, request=request)
+            except Exception as e:
+                logger.error(f"Error updating website traffic: {str(e)}", exc_info=True)
         
         # Continue processing the request
         response = self.get_response(request)
