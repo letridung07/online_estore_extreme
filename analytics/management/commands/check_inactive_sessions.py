@@ -48,8 +48,8 @@ class Command(BaseCommand):
         sessions_processed = 0
         bounces_adjusted = 0
 
-        # Get all sessions that are still active in the database
-        for session in Session.objects.filter(expire_date__gte=timezone.now()):
+        # Get all sessions that are still active in the database, processing in batches
+        for session in Session.objects.filter(expire_date__gte=timezone.now()).iterator(chunk_size=1000):
             try:
                 session_data = session.get_decoded()
                 # Check if the session has been checked recently
