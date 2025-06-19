@@ -161,8 +161,14 @@ def product_performance(request):
 
 @login_required
 @user_passes_test(is_admin)
-@cache_view('analytics_marketing_data', timeout=300, key_func=lambda request, *args, **kwargs: f"user_{request.user.id}")
+@cache_view('analytics_marketing_data', timeout=1800, key_func=lambda request, *args, **kwargs: f"user_{request.user.id}")
 def marketing_analysis(request):
+    """
+    View to display marketing analysis data with caching to optimize database access.
+    The cache timeout is set to 1800 seconds (30 minutes) to reduce frequent database queries.
+    Two queries are used: one for detailed time series data and another for aggregated summaries.
+    Combining them isn't feasible due to their distinct purposes.
+    """
     last_90_days = timezone.now() - timedelta(days=90)
     marketing_data = MarketingAnalytics.objects.filter(date__gte=last_90_days).order_by('date')
     

@@ -1,6 +1,7 @@
 from django.utils import timezone
 from analytics.signals import update_website_traffic
 import logging
+import urllib.parse
 
 # Configure logger for traffic middleware
 logger = logging.getLogger(__name__)
@@ -29,12 +30,27 @@ class WebsiteTrafficMiddleware:
                     request.session['session_start'] = timezone.now().isoformat()
                     request.session.modified = True
                 
-                # Track referral source for new visitors
+                # Track referral source for new visitors with validation
                 if 'referral_source' not in request.session:
                     referral_source = request.META.get('HTTP_REFERER', '')
                     if referral_source:
-                        request.session['referral_source'] = referral_source[:255]  # Limit length to match model field
-                        request.session.modified = True
+                        try:
+                            # Validate URL format
+                            parsed = urllib.parse.urlparse(referral_source)
+                            if parsed.scheme and parsed.netloc:
+                                # Optionally, check for trusted domains (example list, adjust as needed)
+                                trusted_domains = {'example.com', 'yourdomain.com'}
+                                if parsed.netloc in trusted_domains:
+                                    request.session['referral_source'] = referral_source[:255]  # Limit length to match model field
+                                else:
+                                    request.session['referral_source'] = f"untrusted:{referral_source[:247]}"  # Mark as untrusted, limit length
+                            else:
+                                request.session['referral_source'] = "untrusted:invalid_format"
+                            request.session.modified = True
+                        except Exception as e:
+                            logger.error(f"Error validating referral source: {str(e)}")
+                            request.session['referral_source'] = "untrusted:validation_error"
+                            request.session.modified = True
                 
                 update_website_traffic(visitor_id=visitor_id, request=request)
             except Exception as e:
