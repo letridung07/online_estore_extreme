@@ -6,7 +6,7 @@ from datetime import timedelta
 from analytics.models import SalesAnalytics, CustomerAnalytics, ProductAnalytics, MarketingAnalytics, WebsiteTraffic
 from products.models import Product, ProductView
 from orders.models import Order, OrderItem
-from django.db.models.functions import TruncDay, TruncMonth
+from django.db.models.functions import TruncMonth
 from django.core.cache import cache
 from functools import wraps
 from typing import Optional, Callable, Any
