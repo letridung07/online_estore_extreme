@@ -15,7 +15,7 @@ class WebsiteTrafficMiddleware:
     def __call__(self, request):
         # Update website traffic metrics only for relevant requests (non-static resources)
         # Strip query parameters from the path to correctly identify static files
-        path = request.path_info.split('?')[0].lower()
+        path = request.path_info.lower()
         is_static = path.startswith('/static/') or any(path.endswith(ext) for ext in self.STATIC_EXTENSIONS)
         
         if not is_static:
@@ -40,7 +40,7 @@ class WebsiteTrafficMiddleware:
                             if parsed.scheme and parsed.netloc:
                                 # Check for trusted domains from settings
                                 from django.conf import settings
-                                if parsed.netloc in settings.TRUSTED_DOMAINS:
+                                if parsed.netloc.lower() in [domain.lower() for domain in settings.TRUSTED_DOMAINS]:
                                     request.session['referral_source'] = referral_source[:255]  # Limit length to match model field
                                 else:
                                     request.session['referral_source'] = f"untrusted:{referral_source[:247]}"  # Mark as untrusted, limit length
