@@ -357,8 +357,8 @@
             document.querySelectorAll('.compare-btn').forEach(button => {
                 button.addEventListener('click', function() {
                     const productId = this.getAttribute('data-product-id');
-                    const url = `/products/compare/add/${productId}/`;
-                    
+                    const baseUrl = document.getElementById('compareUrl').getAttribute('data-url');
+                    const url = `${baseUrl}${productId}/`;
                     fetch(url, {
                         method: 'GET',
                         headers: {
