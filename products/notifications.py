@@ -16,7 +16,8 @@ def send_low_stock_notification(stock_alert):
     
     if not admin_emails:
         # Log or handle the case where no admin emails are available
-        print("No admin emails found for low stock notification.")
+        logger = logging.getLogger(__name__)
+        logger.warning("No admin emails found for low stock notification.")
         return
     
     # Determine the item name based on alert type
