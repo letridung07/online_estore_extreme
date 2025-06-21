@@ -70,7 +70,7 @@ def is_admin(user):
 
 @login_required
 @user_passes_test(is_admin)
-@cache_view('analytics_overview_data', timeout=600, key_func=lambda request, *args, **kwargs: f"user_{request.user.id}")
+@cache_view('analytics_overview_data', timeout=300, key_func=lambda request, *args, **kwargs: f"user_{request.user.id}")
 def dashboard_overview(request):
     # Sales Summary
     last_30_days = timezone.now() - timedelta(days=30)
@@ -85,7 +85,6 @@ def dashboard_overview(request):
     
     # Product Summary
     top_products = ProductAnalytics.objects.filter(date__gte=last_30_days)\
-            .select_related('product')\
             .values('product__name')\
             .annotate(total_purchases=Sum('purchase_count'))\
             .order_by('-total_purchases')[:5]
@@ -104,7 +103,7 @@ dashboard_overview.__template_name__ = 'analytics/dashboard.html'
 
 @login_required
 @user_passes_test(is_admin)
-@cache_view('analytics_sales_report_data', timeout=3600, key_func=lambda request, *args, **kwargs: f"user_{request.user.id}")
+@cache_view('analytics_sales_report_data', timeout=300, key_func=lambda request, *args, **kwargs: f"user_{request.user.id}")
 def sales_report(request):
     last_365_days = timezone.now() - timedelta(days=365)
     sales_data_daily = SalesAnalytics.objects.filter(date__gte=last_365_days).order_by('date')
@@ -123,7 +122,6 @@ sales_report.__template_name__ = 'analytics/sales_report.html'
 
 @login_required
 @user_passes_test(is_admin)
-@cache_view('analytics_customer_insights_data', timeout=3600, key_func=lambda request, *args, **kwargs: f"user_{request.user.id}")
 def customer_insights(request):
     last_365_days = timezone.now() - timedelta(days=365)
     customer_data = CustomerAnalytics.objects.filter(date__gte=last_365_days).order_by('date')
@@ -139,16 +137,13 @@ def customer_insights(request):
         'total_returning_customers': total_returning_customers,
         'avg_retention_rate': avg_retention_rate,
     }
-    return context
-customer_insights.__template_name__ = 'analytics/customer_insights.html'
+    return render(request, 'analytics/customer_insights.html', context)
 
 @login_required
 @user_passes_test(is_admin)
-@cache_view('analytics_product_performance_data', timeout=600, key_func=lambda request, *args, **kwargs: f"user_{request.user.id}")
 def product_performance(request):
     last_30_days = timezone.now() - timedelta(days=30)
     product_data = ProductAnalytics.objects.filter(date__gte=last_30_days)\
-            .select_related('product')\
             .values('product__name', 'product__id')\
             .annotate(total_views=Sum('views'), total_add_to_cart=Sum('add_to_cart_count'), total_purchases=Sum('purchase_count'))\
             .order_by('-total_purchases')
@@ -162,16 +157,15 @@ def product_performance(request):
         'low_stock_products': list(low_stock_products),
         'out_of_stock_products': out_of_stock_products,
     }
-    return context
-product_performance.__template_name__ = 'analytics/product_performance.html'
+    return render(request, 'analytics/product_performance.html', context)
 
 @login_required
 @user_passes_test(is_admin)
-@cache_view('analytics_marketing_data', timeout=3600, key_func=lambda request, *args, **kwargs: f"user_{request.user.id}")
+@cache_view('analytics_marketing_data', timeout=1800, key_func=lambda request, *args, **kwargs: f"user_{request.user.id}")
 def marketing_analysis(request):
     """
     View to display marketing analysis data with caching to optimize database access.
-    The cache timeout is set to 3600 seconds (1 hour) to reduce frequent database queries.
+    The cache timeout is set to 1800 seconds (30 minutes) to reduce frequent database queries.
     Two queries are used: one for detailed time series data and another for aggregated summaries.
     Combining them isn't feasible due to their distinct purposes.
     """
@@ -180,7 +174,6 @@ def marketing_analysis(request):
     
     # Combined summary for campaigns and discount codes to reduce database queries
     marketing_summary = MarketingAnalytics.objects.filter(date__gte=last_90_days)\
-            .select_related('campaign')\
             .values('campaign__name', 'discount_code')\
             .annotate(total_impressions=Sum('impressions'), total_clicks=Sum('clicks'), total_conversions=Sum('conversions'), total_revenue=Sum('revenue_generated'))\
             .order_by('-total_revenue')
@@ -203,7 +196,6 @@ marketing_analysis.__template_name__ = 'analytics/marketing_analysis.html'
 
 @login_required
 @user_passes_test(is_admin)
-@cache_view('analytics_website_traffic_data', timeout=600, key_func=lambda request, *args, **kwargs: f"user_{request.user.id}")
 def website_traffic(request):
     last_90_days = timezone.now() - timedelta(days=90)
     traffic_data = WebsiteTraffic.objects.filter(date__gte=last_90_days).order_by('date')
@@ -211,5 +203,4 @@ def website_traffic(request):
     context = {
         'traffic_data': list(traffic_data.values('date', 'total_visits', 'unique_visitors', 'bounce_rate', 'average_session_duration', 'top_referral_source')),
     }
-    return context
-website_traffic.__template_name__ = 'analytics/website_traffic.html'
+    return render(request, 'analytics/website_traffic.html', context)
