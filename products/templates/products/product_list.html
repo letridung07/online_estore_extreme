@@ -179,8 +179,8 @@
                                     <h5 class="card-title">{{ product.name }}</h5>
                                     <p class="card-text">Price: ${{ product.price }}</p>
                                     <a href="{% url 'product_detail' pk=product.pk %}" class="btn btn-outline-primary btn-sm">View Details</a>
-                                    <button class="btn btn-outline-secondary btn-sm mt-2 compare-btn" data-product-id="{{ product.id }}" {% if product.id in request.session.comparison_products %}disabled{% endif %}>
-                                        {% if product.id in request.session.comparison_products %}
+                                    <button class="btn btn-outline-secondary btn-sm mt-2 compare-btn" data-product-id="{{ product.id }}" {% if product.id in request.session.get('comparison_products', []) %}disabled{% endif %}>
+                                        {% if product.id in request.session.get('comparison_products', []) %}
                                             In Comparison
                                         {% else %}
                                             Compare
