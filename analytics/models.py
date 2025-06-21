@@ -12,6 +12,9 @@ class SalesAnalytics(models.Model):
 
     class Meta:
         verbose_name_plural = "Sales Analytics"
+        indexes = [
+            models.Index(fields=['date']),
+        ]
 
     def __str__(self):
         return f"Sales Analytics for {self.date.strftime('%Y-%m-%d')} - Revenue: {self.total_revenue}"
@@ -29,6 +32,9 @@ class CustomerAnalytics(models.Model):
 
     class Meta:
         verbose_name_plural = "Customer Analytics"
+        indexes = [
+            models.Index(fields=['date']),
+        ]
 
     def __str__(self):
         return f"Customer Analytics for {self.date.strftime('%Y-%m-%d')} - Total Customers: {self.total_customers}"
@@ -49,6 +55,10 @@ class ProductAnalytics(models.Model):
     class Meta:
         unique_together = ('product', 'date')
         verbose_name_plural = "Product Analytics"
+        indexes = [
+            models.Index(fields=['date']),
+            models.Index(fields=['product']),
+        ]
 
     def __str__(self):
         return f"Product Analytics for {self.product.name} on {self.date.strftime('%Y-%m-%d')} - Views: {self.views}"
@@ -76,6 +86,9 @@ class MarketingAnalytics(models.Model):
                 name='at_least_one_marketing_identifier'
             )
         ]
+        indexes = [
+            models.Index(fields=['date']),
+        ]
 
     def __str__(self):
         identifier = self.campaign.name if self.campaign else self.discount_code if self.discount_code else "General"
@@ -94,6 +107,9 @@ class WebsiteTraffic(models.Model):
 
     class Meta:
         verbose_name_plural = "Website Traffic"
+        indexes = [
+            models.Index(fields=['date']),
+        ]
 
     def __str__(self):
         return f"Website Traffic for {self.date.strftime('%Y-%m-%d')} - Visits: {self.total_visits}"

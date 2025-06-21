@@ -1,4 +1,5 @@
 from django.shortcuts import render, get_object_or_404
+from django.core.cache import cache
 from django.db.models import Q, Count, Avg
 from .models import Product, Category, Review, ProductView
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
@@ -12,6 +13,12 @@ def product_list(request):
     """
     View for displaying a list of products with search, filtering, sorting, and pagination capabilities.
     """
+    # Generate a cache key based on request parameters
+    cache_key = f"product_list:search_{request.GET.get('search', '')}:category_{request.GET.get('category', '')}:min_price_{request.GET.get('min_price', '')}:max_price_{request.GET.get('max_price', '')}:in_stock_{request.GET.get('in_stock', '')}:sort_{request.GET.get('sort', '')}:page_{request.GET.get('page', '1')}"
+    cached_context = cache.get(cache_key)
+    if cached_context:
+        return render(request, 'products/product_list.html', cached_context)
+    
     products = Product.objects.all()
     categories = Category.objects.all()
     
@@ -78,6 +85,20 @@ def product_list(request):
         'sort': sort,
         'popular_products': popular_products,
     }
+    cache.set(cache_key, context, 300)  # Cache for 5 minutes
+    return render(request, 'products/product_list.html', context)
+    
+    context = {
+        'products': products,
+        'categories': categories,
+        'search_query': search_query,
+        'selected_category': category_id,
+        'min_price': min_price,
+        'max_price': max_price,
+        'in_stock': in_stock,
+        'sort': sort,
+        'popular_products': popular_products,
+    }
     return render(request, 'products/product_list.html', context)
 
 def record_product_view(product, user):
@@ -94,7 +115,7 @@ def product_detail(request, pk):
     View for displaying a single product's details with recommendations and reviews.
     """
     from accounts.models import Wishlist, WishlistItem
-    product = get_object_or_404(Product, pk=pk)
+    product = get_object_or_404(Product.objects.select_related('category'), pk=pk)
 
     # Record product view using helper
     record_product_view(product, request.user)
