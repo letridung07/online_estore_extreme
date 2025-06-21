@@ -95,28 +95,6 @@ class ProductView(models.Model):
     def __str__(self):
         return f"{self.interaction_type} of {self.product.name} by {self.user.username if self.user else 'Anonymous'} on {self.viewed_at.strftime('%Y-%m-%d')}"
 
-from django.db.models.signals import post_save, post_delete
-from django.dispatch import receiver
-from .search_indexes import index_product
-
-@receiver(post_save, sender=Product)
-def update_product_index(sender, instance, **kwargs):
-    index_product(instance)
-
-@receiver(post_delete, sender=Product)
-def delete_product_index(sender, instance, **kwargs):
-    from elasticsearch_dsl import Document
-    doc = Document(meta={'id': instance.id}, _index='products')
-    doc.delete(ignore=404)
-
-@receiver(post_save, sender=Variant)
-def update_variant_index(sender, instance, **kwargs):
-    index_product(instance.product)
-
-@receiver(post_delete, sender=Variant)
-def delete_variant_index(sender, instance, **kwargs):
-    index_product(instance.product)
-
 
 class StockAlert(models.Model):
     ALERT_TYPES = (

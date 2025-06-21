@@ -34,23 +34,6 @@
                 </div>
             </div>
             <div class="col-12">
-                <select name="variant" class="form-select">
-                    <option value="">All Variants</option>
-                    {% for variant in variant_options %}
-                        <option value="{{ variant }}" {% if variant_filter == variant %}selected{% endif %}>{{ variant }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="col-12">
-                <select name="min_rating" class="form-select">
-                    <option value="">Any Rating</option>
-                    <option value="4" {% if min_rating == '4' %}selected{% endif %}>4 Stars & Above</option>
-                    <option value="3" {% if min_rating == '3' %}selected{% endif %}>3 Stars & Above</option>
-                    <option value="2" {% if min_rating == '2' %}selected{% endif %}>2 Stars & Above</option>
-                    <option value="1" {% if min_rating == '1' %}selected{% endif %}>1 Star & Above</option>
-                </select>
-            </div>
-            <div class="col-12">
                 <select name="sort" class="form-select">
                     <option value="">Sort By</option>
                     <option value="price_asc" {% if sort == 'price_asc' %}selected{% endif %}>Price: Low to High</option>
