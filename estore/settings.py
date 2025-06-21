@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     'promotions',
     'analytics',
     'social_integration',
+    'elasticsearch_dsl',  # For Elasticsearch integration
 ]
 
 MIDDLEWARE = [
@@ -149,6 +150,14 @@ CACHES = {
             'CLIENT_CLASS': 'django_redis.client.DefaultClient',
         }
     }
+}
+
+# Elasticsearch configuration for advanced search
+ELASTICSEARCH_DSL = {
+    'default': {
+        'hosts': os.getenv('ELASTICSEARCH_HOST', 'localhost:9200'),
+        'timeout': 30,
+    },
 }
 
 # Default primary key field type
