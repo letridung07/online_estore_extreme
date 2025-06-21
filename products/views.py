@@ -12,7 +12,7 @@ def product_list(request):
     """
     View for displaying a list of products with search, filtering, sorting, and pagination capabilities.
     """
-    products = Product.objects.all()
+    products = Product.objects.select_related('category').all()
     categories = Category.objects.all()
     
     # Handle search functionality
@@ -94,7 +94,7 @@ def product_detail(request, pk):
     View for displaying a single product's details with recommendations and reviews.
     """
     from accounts.models import Wishlist, WishlistItem
-    product = get_object_or_404(Product, pk=pk)
+    product = get_object_or_404(Product.objects.select_related('category', 'supplier').prefetch_related('reviews', 'variants'), pk=pk)
 
     # Record product view using helper
     record_product_view(product, request.user)
@@ -240,7 +240,7 @@ def compare_products(request):
     View to render the comparison page with selected products from session data.
     """
     comparison_list = request.session.get('comparison_products', [])
-    products = Product.objects.filter(id__in=comparison_list) if comparison_list else []
+    products = Product.objects.select_related('category', 'supplier').filter(id__in=comparison_list) if comparison_list else []
     
     context = {
         'products': products,

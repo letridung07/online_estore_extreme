@@ -1,0 +1,7 @@
+Django==5.2.3
+djangorestframework==3.14.0
+django-allauth==0.63.3
+django-redis==5.4.0
+psycopg2-binary==2.9.9
+stripe==10.5.0
+redis==5.0.8
