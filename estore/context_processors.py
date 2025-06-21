@@ -14,3 +14,8 @@ def cart_item_count(request):
         cart_item_count = sum(item.quantity for item in cart.items.all())
     
     return {'cart_item_count': cart_item_count}
+
+def comparison_count(request):
+    comparison_list = request.session.get('comparison_products', [])
+    comparison_count = len(comparison_list)
+    return {'comparison_count': comparison_count}
