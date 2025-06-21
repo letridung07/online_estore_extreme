@@ -180,3 +180,9 @@ STRIPE_WEBHOOK_SECRET = os.getenv('STRIPE_WEBHOOK_SECRET', '')
 
 # Trusted domains for referral source validation
 TRUSTED_DOMAINS = {'example.com', 'yourdomain.com'}
+
+# Inventory Management Settings
+DEFAULT_LOW_STOCK_THRESHOLD = 5
+INVENTORY_NOTIFICATION_EMAILS = []  # List of admin emails for low stock notifications, e.g., ['admin1@example.com', 'admin2@example.com']
+INVENTORY_NOTIFICATION_FREQUENCY = 24  # Hours between repeated notifications for the same item
+AUTO_REORDER_ENABLED_GLOBALLY = False  # Global toggle for auto-reordering functionality
