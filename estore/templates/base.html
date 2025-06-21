@@ -25,6 +25,9 @@
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'cart_detail' %}">Cart {% if cart_item_count %}({{ cart_item_count }}){% endif %}</a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'compare_products' %}">Compare {% if comparison_count %}({{ comparison_count }}){% endif %}</a>
+                    </li>
                     {% if user.is_authenticated %}
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'profile' %}">Account</a>

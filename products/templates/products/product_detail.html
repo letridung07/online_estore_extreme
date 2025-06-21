@@ -71,6 +71,13 @@
                             <span class="wishlist-icon" style="display: none;">{% if product_in_wishlist %}{% else %}❤️{% endif %}</span>
                         </a>
                     {% endif %}
+                    <button class="btn btn-outline-secondary btn-lg mt-3 compare-btn" data-product-id="{{ product.id }}" {% if product.id in request.session.get('comparison_products', []) %}disabled{% endif %}>
+                        {% if product.id in request.session.get('comparison_products', []) %}
+                            In Comparison
+                        {% else %}
+                            Compare
+                        {% endif %}
+                    </button>
                     <div class="mt-3">
                         <h6>Share this product:</h6>
                         <div class="social-share-buttons">
@@ -240,6 +247,7 @@
             opacity: 1;
         }
     </style>
+    <script type="module" src="{% static 'js/ajax_utils.js' %}"></script>
     <script>
         function changeMainImage(src, alt) {
             document.getElementById('mainImage').src = src;
@@ -294,65 +302,18 @@
                     e.preventDefault();
                     const productId = this.getAttribute('data-product-id');
                     const inWishlist = this.getAttribute('data-in-wishlist') === 'true';
-                    const url = inWishlist ? `/accounts/wishlist/remove-ajax/${productId}/` : `/accounts/wishlist/add/${productId}/`;
-                    const icon = this.querySelector('.wishlist-icon');
-                    const wishlistText = this.querySelector('.wishlist-text');
-                    
-                    fetch(url, {
-                        method: 'POST',
-                        headers: {
-                            'X-Requested-With': 'XMLHttpRequest',
-                            'X-CSRFToken': getCsrfToken()
-                        }
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.status === 'added') {
-                            this.classList.add('added');
-                            this.setAttribute('data-in-wishlist', 'true');
-                            icon.textContent = '';
-                            icon.style.display = 'none';
-                            icon.classList.add('animate');
-                            wishlistText.textContent = 'Remove from Wishlist';
-                            setTimeout(() => {
-                                icon.classList.remove('animate');
-                            }, 1000);
-                        } else if (data.status === 'removed') {
-                            this.classList.remove('added');
-                            this.setAttribute('data-in-wishlist', 'false');
-                            icon.textContent = '❤️';
-                            icon.style.display = 'none';
-                            icon.classList.add('animate');
-                            wishlistText.textContent = 'Add to Wishlist';
-                            setTimeout(() => {
-                                icon.classList.remove('animate');
-                            }, 1000);
-                        } else if (data.status === 'exists') {
-                            this.classList.add('added');
-                            this.setAttribute('data-in-wishlist', 'true');
-                            icon.textContent = '';
-                            icon.style.display = 'none';
-                            wishlistText.textContent = 'Remove from Wishlist';
-                            icon.classList.add('animate');
-                            setTimeout(() => {
-                                icon.classList.remove('animate');
-                            }, 1000);
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        alert('An error occurred. Please try again.');
-                    });
+                    toggleWishlist(this, productId, inWishlist);
                 });
             });
 
-            function getCsrfToken() {
-                const cookieValue = document.cookie
-                    .split('; ')
-                    .find(row => row.startsWith('csrftoken='))
-                    ?.split('=')[1];
-                return cookieValue;
-            }
+            // Handle compare button clicks via AJAX
+            document.querySelectorAll('.compare-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const productId = this.getAttribute('data-product-id');
+                    const baseUrl = document.getElementById('compareUrl').getAttribute('data-url');
+                    addToComparison(this, productId, baseUrl);
+                });
+            });
         });
     </script>
 {% endblock %}

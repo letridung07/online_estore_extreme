@@ -3,6 +3,7 @@ from django.db.models import Q, Count, Avg
 from .models import Product, Category, Review, ProductView
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.shortcuts import redirect
+from django.http import JsonResponse
 from products.recommendations import get_personalized_recommendations, get_popular_products # type: ignore
 
 REVIEW_DISPLAY_LIMIT = 10  # Number of reviews to display per product
@@ -167,3 +168,81 @@ def product_detail(request, pk):
         'product_in_wishlist': product_in_wishlist,
     }
     return render(request, 'products/product_detail.html', context)
+
+
+def add_to_comparison(request, product_id):
+    """
+    View to add a product to the comparison list stored in session data.
+    Limits to 4 products for comparison.
+    """
+    product = get_object_or_404(Product, id=product_id)
+    comparison_list = request.session.get('comparison_products', [])
+    
+    if product_id not in comparison_list:
+        if len(comparison_list) < 4:
+            comparison_list.append(product_id)
+            request.session['comparison_products'] = comparison_list
+            request.session.modified = True
+            message = f"{product.name} has been added to comparison."
+            status = "success"
+        else:
+            message = "You can compare up to 4 products only. Please remove one to add a new product."
+            status = "error"
+    else:
+        message = f"{product.name} is already in your comparison list."
+        status = "info"
+    
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        return JsonResponse({'status': status, 'message': message})
+    else:
+        return redirect(request.META.get('HTTP_REFERER', 'product_list'))
+
+
+def remove_from_comparison(request, product_id):
+    """
+    View to remove a product from the comparison list in session data.
+    """
+    comparison_list = request.session.get('comparison_products', [])
+    product = get_object_or_404(Product, id=product_id)
+    
+    if product_id in comparison_list:
+        comparison_list.remove(product_id)
+        request.session['comparison_products'] = comparison_list
+        request.session.modified = True
+        message = f"{product.name} has been removed from comparison."
+        status = "success"
+    else:
+        message = f"{product.name} was not in your comparison list."
+        status = "info"
+    
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        return JsonResponse({'status': status, 'message': message})
+    else:
+        from django.urls import reverse
+        return redirect(request.META.get('HTTP_REFERER', reverse('compare_products')))
+
+
+def clear_comparison(request):
+    """
+    View to clear all products from the comparison list in session data.
+    """
+    request.session['comparison_products'] = []
+    request.session.modified = True
+    
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        return JsonResponse({'status': 'success', 'message': 'Comparison list cleared.'})
+    else:
+        return redirect(request.META.get('HTTP_REFERER', 'product_list'))
+
+
+def compare_products(request):
+    """
+    View to render the comparison page with selected products from session data.
+    """
+    comparison_list = request.session.get('comparison_products', [])
+    products = Product.objects.filter(id__in=comparison_list) if comparison_list else []
+    
+    context = {
+        'products': products,
+    }
+    return render(request, 'products/product_comparison.html', context)
