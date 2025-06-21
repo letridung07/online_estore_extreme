@@ -257,10 +257,13 @@
                     const url = urlTemplate.replace(/0\/?$/, productId + "/");
                     
                     fetch(url, {
-                        method: 'GET',
+                        method: 'POST',
                         headers: {
-                            'X-Requested-With': 'XMLHttpRequest'
-                        }
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                        },
+                        body: JSON.stringify({ product_id: productId })
                     })
                     .then(response => response.json())
                     .then(data => {
