@@ -58,6 +58,6 @@ def send_low_stock_notification(stock_alert):
             recipient_list=recipient_list,
             fail_silently=False,
         )
-        print(f"Low stock notification sent for {item_name} to {len(admin_emails)} admin(s).")
+        logger.info(f"Low stock notification sent for {item_name} to {len(admin_emails)} admin(s).")
     except Exception as e:
-        print(f"Failed to send low stock notification for {item_name}: {str(e)}")
+        logger.error(f"Failed to send low stock notification for {item_name}: {str(e)}")
