@@ -113,6 +113,7 @@
         }
     </style>
 
+    <script type="module" src="{% static 'js/ajax_utils.js' %}"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Handle remove from comparison via AJAX
@@ -120,52 +121,16 @@
                 button.addEventListener('click', function(e) {
                     e.preventDefault();
                     const productId = this.getAttribute('data-product-id');
-                    const url = `/products/compare/remove/${productId}/`;
-                    
-                    fetch(url, {
-                        method: 'GET',
-                        headers: {
-                            'X-Requested-With': 'XMLHttpRequest'
-                        }
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.status === 'success') {
-                            window.location.reload(); // Reload to update the comparison table
-                        } else {
-                            alert(data.message);
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        alert('An error occurred. Please try again.');
-                    });
+                    const baseUrl = `/products/compare/remove/`;
+                    removeFromComparison(this, productId, baseUrl);
                 });
             });
 
             // Handle clear all comparison via AJAX
             document.querySelector('.clear-comparison').addEventListener('click', function(e) {
                 e.preventDefault();
-                const url = `/products/compare/clear/`;
-                
-                fetch(url, {
-                    method: 'GET',
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest'
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.status === 'success') {
-                        window.location.reload(); // Reload to show empty state
-                    } else {
-                        alert(data.message);
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('An error occurred. Please try again.');
-                });
+                const baseUrl = `/products/compare/clear/`;
+                clearComparison(this, baseUrl);
             });
         });
     </script>

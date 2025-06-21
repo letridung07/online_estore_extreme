@@ -247,6 +247,7 @@
             opacity: 1;
         }
     </style>
+    <script type="module" src="{% static 'js/ajax_utils.js' %}"></script>
     <script>
         function changeMainImage(src, alt) {
             document.getElementById('mainImage').src = src;
@@ -301,55 +302,7 @@
                     e.preventDefault();
                     const productId = this.getAttribute('data-product-id');
                     const inWishlist = this.getAttribute('data-in-wishlist') === 'true';
-                    const url = inWishlist ? `/accounts/wishlist/remove-ajax/${productId}/` : `/accounts/wishlist/add/${productId}/`;
-                    const icon = this.querySelector('.wishlist-icon');
-                    const wishlistText = this.querySelector('.wishlist-text');
-                    
-                    fetch(url, {
-                        method: 'POST',
-                        headers: {
-                            'X-Requested-With': 'XMLHttpRequest',
-                            'X-CSRFToken': getCsrfToken()
-                        }
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.status === 'added') {
-                            this.classList.add('added');
-                            this.setAttribute('data-in-wishlist', 'true');
-                            icon.textContent = '';
-                            icon.style.display = 'none';
-                            icon.classList.add('animate');
-                            wishlistText.textContent = 'Remove from Wishlist';
-                            setTimeout(() => {
-                                icon.classList.remove('animate');
-                            }, 1000);
-                        } else if (data.status === 'removed') {
-                            this.classList.remove('added');
-                            this.setAttribute('data-in-wishlist', 'false');
-                            icon.textContent = '❤️';
-                            icon.style.display = 'none';
-                            icon.classList.add('animate');
-                            wishlistText.textContent = 'Add to Wishlist';
-                            setTimeout(() => {
-                                icon.classList.remove('animate');
-                            }, 1000);
-                        } else if (data.status === 'exists') {
-                            this.classList.add('added');
-                            this.setAttribute('data-in-wishlist', 'true');
-                            icon.textContent = '';
-                            icon.style.display = 'none';
-                            wishlistText.textContent = 'Remove from Wishlist';
-                            icon.classList.add('animate');
-                            setTimeout(() => {
-                                icon.classList.remove('animate');
-                            }, 1000);
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        alert('An error occurred. Please try again.');
-                    });
+                    toggleWishlist(this, productId, inWishlist);
                 });
             });
 
@@ -358,37 +311,9 @@
                 button.addEventListener('click', function() {
                     const productId = this.getAttribute('data-product-id');
                     const baseUrl = document.getElementById('compareUrl').getAttribute('data-url');
-                    const url = `${baseUrl}${productId}/`;
-                    fetch(url, {
-                        method: 'GET',
-                        headers: {
-                            'X-Requested-With': 'XMLHttpRequest'
-                        }
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.status === 'success') {
-                            this.textContent = 'In Comparison';
-                            this.disabled = true;
-                            alert(data.message);
-                        } else {
-                            alert(data.message);
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        alert('An error occurred. Please try again.');
-                    });
+                    addToComparison(this, productId, baseUrl);
                 });
             });
-
-            function getCsrfToken() {
-                const cookieValue = document.cookie
-                    .split('; ')
-                    .find(row => row.startsWith('csrftoken='))
-                    ?.split('=')[1];
-                return cookieValue;
-            }
         });
     </script>
 {% endblock %}
